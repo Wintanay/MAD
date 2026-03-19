@@ -17,4 +17,5 @@
 ##  Assets Needed
 - `home_preview.png`
 - `ic_no_transactions.svg` 
-- `ic_home_active.svg` 
+- `ic_home_active.svg`
+- `ic_add.svg`
