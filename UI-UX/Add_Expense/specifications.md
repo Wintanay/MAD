@@ -1,4 +1,4 @@
-# ➕ Add Expense Screen Specifications
+#  Add Expense Screen Specifications
 
 ##  Layout & Colors
 - **Header Card:** `0xFF2D2F33` (Dark Charcoal/Grey)
