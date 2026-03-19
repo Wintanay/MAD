@@ -1,4 +1,4 @@
-#   Charts (Spending Analysis) Screen Specification
+#   Charts (Spending Analysis) Screen Specifications
 
 ##  Layout & Colors
 - **Background:** `0xFFFFFFFF` (Pure White)
