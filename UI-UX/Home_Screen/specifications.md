@@ -1,4 +1,4 @@
-#  Home Screen
+#  Home Screen Specifications
 
 ##  Layout & Colors
 - **Background:** `0xFFFFFFFF` (Pure White)
@@ -15,5 +15,6 @@
 - **Floating Action Button:** Green circle with a white "+" placed in the bottom right corner.
 
 ##  Assets Needed
+- `home_preview.png`
 - `ic_no_transactions.svg` 
 - `ic_home_active.svg` 
