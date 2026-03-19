@@ -1,19 +1,20 @@
 #  Add Expense Screen Specifications
 
 ##  Layout & Colors
-- **Header Card:** `0xFF2D2F33` (Dark Charcoal/Grey)
+- **Header Card Background:** `0xFF2D2F33` (Dark Charcoal/Grey)
 - **Amount Text:** `0xFFFFFFFF` (White)
-- **Cancel Button (X):** `0xFFE53935` (Danger Red)
-- **Checkmark Button (✓):** `0xFF00C853` (Success Green)
-- **Save Button:** `0xFF00C853` (Success Green)
-- **Category Icon Background:** `0xFFF5F5F5` (Light Grey circle)
+- **Primary Green:** `0xFF00C853` (Confirm Button & Save Button)
+- **Danger Red:** `0xFFE53935` (Cancel Button X)
+- **Category Icon Circle:** `0xFFF5F5F5` (Very Light Grey)
 
-##  Flutter Implementation
-- **Top Card:** Use a `Container` with `BorderRadius.vertical(bottom: Radius.circular(24))`.
-- **Category List:** Use a `ListView.builder` or `Column` for the list of categories (Food, Transport, etc.).
-- **Row Styling:** Each category row should have an Icon in a circle on the left and the name text on the right.
-- **Save Button:** Use `ElevatedButton` with `width: double.infinity` at the bottom of the screen.
+##  Layout Details
+- **Amount Card:** A dark header at the top with a large text display for the numbers.
+- **Top Actions:** A red "X" (Cancel) on the far left and a green "✓" (Confirm) on the far right.
+- **Category List:** A vertical list of categories (Food, Transport, Rent, Shopping).
+- **Category Row:** Each row should have a grey circle with an icon on the left, the name in the middle, and a right arrow (`>`) on the right.
+- **Save Button:** A full-width green button at the very bottom of the screen.
 
 ##  Assets Needed
 - `add_expense_preview.png`
 - `ic_food.svg`, `ic_transport.svg`, `ic_rent.svg`, `ic_shopping.svg`
+  
