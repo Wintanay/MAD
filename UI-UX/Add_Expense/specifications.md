@@ -17,4 +17,4 @@
 ##  Assets Needed
 - `add_expense_preview.png`
 - `ic_food.svg`, `ic_transport.svg`, `ic_rent.svg`, `ic_shopping.svg`
-  
+- `ic_cancel.svg`, `ic_confirm.svg`
