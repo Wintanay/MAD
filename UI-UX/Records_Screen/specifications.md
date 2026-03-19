@@ -20,3 +20,4 @@
 ##  Assets Needed
 - `records_preview.png`
 - `ic_no_transactions.svg` 
+- `ic_records_active.svg` 
