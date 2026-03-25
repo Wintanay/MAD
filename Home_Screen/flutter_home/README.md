@@ -1,17 +1,19 @@
-# flutter_home
+# Personal Expense Tracker
 
-A new Flutter project.
+## Project Map
 
-## Getting Started
+- ** UI/UX Design**: Check the `/UI-UX` folder for Figma screenshots.
+- ** App Code**: All Flutter code is located in `/expense_tracker_app`.
 
-This project is a starting point for a Flutter application.
+## Instructions for Team Members
 
-A few resources to get you started if this is your first Flutter project:
+If you want to run the UI I built, follow these steps:
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+1. `git pull origin main`
+2. Open the `expense_tracker_app` folder in VS Code.
+3. Run `flutter pub get` in the terminal.
+4. Run the app.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Features Added (By Tnebeb Zewdu)
+
+- Home Screen with Balance/Income/Expense cards.
