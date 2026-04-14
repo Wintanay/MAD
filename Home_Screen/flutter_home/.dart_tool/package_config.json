@@ -45,9 +45,9 @@
     },
     {
       "name": "flutter_lints",
-      "rootUri": "file:///C:/Users/HP/AppData/Local/Pub/Cache/hosted/pub.dev/flutter_lints-6.0.0",
+      "rootUri": "file:///C:/Users/HP/AppData/Local/Pub/Cache/hosted/pub.dev/flutter_lints-3.0.2",
       "packageUri": "lib/",
-      "languageVersion": "3.8"
+      "languageVersion": "3.1"
     },
     {
       "name": "flutter_test",
@@ -75,9 +75,9 @@
     },
     {
       "name": "lints",
-      "rootUri": "file:///C:/Users/HP/AppData/Local/Pub/Cache/hosted/pub.dev/lints-6.1.0",
+      "rootUri": "file:///C:/Users/HP/AppData/Local/Pub/Cache/hosted/pub.dev/lints-3.0.0",
       "packageUri": "lib/",
-      "languageVersion": "3.8"
+      "languageVersion": "3.0"
     },
     {
       "name": "matcher",
@@ -161,7 +161,7 @@
       "name": "flutter_home",
       "rootUri": "../",
       "packageUri": "lib/",
-      "languageVersion": "3.11"
+      "languageVersion": "3.1"
     }
   ],
   "generator": "pub",

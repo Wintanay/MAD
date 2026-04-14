@@ -16,7 +16,7 @@
     },
     {
       "name": "flutter_lints",
-      "version": "6.0.0",
+      "version": "3.0.2",
       "dependencies": [
         "lints"
       ]
@@ -53,7 +53,7 @@
     },
     {
       "name": "lints",
-      "version": "6.1.0",
+      "version": "3.0.0",
       "dependencies": []
     },
     {
