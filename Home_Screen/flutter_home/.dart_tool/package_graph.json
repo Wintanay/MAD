@@ -5,9 +5,8 @@
   "packages": [
     {
       "name": "flutter_home",
-      "version": "1.0.0+1",
+      "version": "0.1.0+1",
       "dependencies": [
-        "cupertino_icons",
         "flutter"
       ],
       "devDependencies": [
@@ -39,11 +38,6 @@
         "test_api",
         "vector_math"
       ]
-    },
-    {
-      "name": "cupertino_icons",
-      "version": "1.0.8",
-      "dependencies": []
     },
     {
       "name": "flutter",
