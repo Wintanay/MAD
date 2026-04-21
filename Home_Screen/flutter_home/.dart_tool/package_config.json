@@ -3,7 +3,7 @@
   "packages": [
     {
       "name": "async",
-      "rootUri": "file:///C:/Users/HP/AppData/Local/Pub/Cache/hosted/pub.dev/async-2.13.0",
+      "rootUri": "file:///C:/Users/HP/AppData/Local/Pub/Cache/hosted/pub.dev/async-2.13.1",
       "packageUri": "lib/",
       "languageVersion": "3.4"
     },
@@ -39,7 +39,7 @@
     },
     {
       "name": "flutter",
-      "rootUri": "file:///C:/flutter/packages/flutter",
+      "rootUri": "file:///C:/src/flutter/packages/flutter",
       "packageUri": "lib/",
       "languageVersion": "3.9"
     },
@@ -51,7 +51,7 @@
     },
     {
       "name": "flutter_test",
-      "rootUri": "file:///C:/flutter/packages/flutter_test",
+      "rootUri": "file:///C:/src/flutter/packages/flutter_test",
       "packageUri": "lib/",
       "languageVersion": "3.9"
     },
@@ -105,7 +105,7 @@
     },
     {
       "name": "sky_engine",
-      "rootUri": "file:///C:/flutter/bin/cache/pkg/sky_engine",
+      "rootUri": "file:///C:/src/flutter/bin/cache/pkg/sky_engine",
       "packageUri": "lib/",
       "languageVersion": "3.9"
     },
@@ -153,7 +153,7 @@
     },
     {
       "name": "vm_service",
-      "rootUri": "file:///C:/Users/HP/AppData/Local/Pub/Cache/hosted/pub.dev/vm_service-15.0.2",
+      "rootUri": "file:///C:/Users/HP/AppData/Local/Pub/Cache/hosted/pub.dev/vm_service-15.1.0",
       "packageUri": "lib/",
       "languageVersion": "3.5"
     },
@@ -165,8 +165,8 @@
     }
   ],
   "generator": "pub",
-  "generatorVersion": "3.11.1",
-  "flutterRoot": "file:///C:/flutter",
-  "flutterVersion": "3.41.4",
+  "generatorVersion": "3.11.5",
+  "flutterRoot": "file:///C:/src/flutter",
+  "flutterVersion": "3.41.7",
   "pubCache": "file:///C:/Users/HP/AppData/Local/Pub/Cache"
 }

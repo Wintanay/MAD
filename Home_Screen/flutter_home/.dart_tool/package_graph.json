@@ -159,7 +159,7 @@
     },
     {
       "name": "async",
-      "version": "2.13.0",
+      "version": "2.13.1",
       "dependencies": [
         "collection",
         "meta"
@@ -216,7 +216,7 @@
     },
     {
       "name": "vm_service",
-      "version": "15.0.2",
+      "version": "15.1.0",
       "dependencies": []
     }
   ],

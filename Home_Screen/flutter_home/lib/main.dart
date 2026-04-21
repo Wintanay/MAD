@@ -33,109 +33,95 @@ class HomeScreen extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            // --- TOTAL BALANCE CARD ---
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 20.0,
-                vertical: 10.0,
-              ),
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(25),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).cardColor,
-                  borderRadius: BorderRadius.circular(24),
-                ),
-                child: Column(
-                  children: [
-                    const Text(
-                      "Total Balance",
-                      style: TextStyle(color: Colors.white70, fontSize: 16),
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      "2,450.00 ETB",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 25),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        _buildStatItem(
-                          "Income",
-                          "5,000 ETB",
-                          Colors.greenAccent,
-                        ),
-                        _buildStatItem(
-                          "Expense",
-                          "2,550 ETB",
-                          Colors.redAccent,
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+            _buildBalanceCard(context), // Block 1: The Main Card
+            _buildSectionHeader("Recent Transactions"), // Block 2: The Header
+            _buildTransactionList(), // Block 3: The List
+          ],
+        ),
+      ),
+      floatingActionButton: _buildAddButton(),
+      bottomNavigationBar: _buildBottomNav(),
+    );
+  }
+
+  // --- REFACTORED BUILDING BLOCKS ---
+
+  Widget _buildBalanceCard(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(25),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Column(
+          children: [
+            const Text(
+              "Total Balance",
+              style: TextStyle(color: Colors.white70, fontSize: 16),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              "2,450.00 ETB",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
               ),
             ),
-
-            // --- REPLACING SPACER WITH SCROLLING LIST ---
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 25, vertical: 10),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  "Recent Transactions",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ),
-            ),
-
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                children: [
-                  _buildTransactionRow(
-                    Icons.shopping_cart,
-                    "Groceries",
-                    "-450 ETB",
-                    "Today",
-                  ),
-                  _buildTransactionRow(
-                    Icons.restaurant,
-                    "Dinner",
-                    "-300 ETB",
-                    "Yesterday",
-                  ),
-                  _buildTransactionRow(
-                    Icons.work,
-                    "Salary",
-                    "+5,000 ETB",
-                    "April 10",
-                    isIncome: true,
-                  ),
-                  _buildTransactionRow(
-                    Icons.directions_car,
-                    "Fuel",
-                    "-800 ETB",
-                    "April 08",
-                  ),
-                ],
-              ),
+            const SizedBox(height: 25),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _buildStatItem("Income", "5,000 ETB", Colors.greenAccent),
+                _buildStatItem("Expense", "2,550 ETB", Colors.redAccent),
+              ],
             ),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {},
-        backgroundColor: const Color(0xFF00C853),
-        shape: const CircleBorder(),
-        child: const Icon(Icons.add, color: Colors.white, size: 35),
+    );
+  }
+
+  Widget _buildSectionHeader(String title) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 10),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Text(
+          title,
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
       ),
-      bottomNavigationBar: _buildBottomNav(),
+    );
+  }
+
+  Widget _buildTransactionList() {
+    return Expanded(
+      child: ListView(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        children: [
+          _buildTransactionRow(
+              Icons.shopping_cart, "Groceries", "-450 ETB", "Today"),
+          _buildTransactionRow(
+              Icons.restaurant, "Dinner", "-300 ETB", "Yesterday"),
+          _buildTransactionRow(Icons.work, "Salary", "+5,000 ETB", "April 10",
+              isIncome: true),
+          _buildTransactionRow(
+              Icons.directions_car, "Fuel", "-800 ETB", "April 08"),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAddButton() {
+    return FloatingActionButton(
+      onPressed: () {},
+      backgroundColor: const Color(0xFF00C853),
+      shape: const CircleBorder(),
+      child: const Icon(Icons.add, color: Colors.white, size: 35),
     );
   }
 
