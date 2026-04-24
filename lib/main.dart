@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'splashscreen.dart'; // Make sure this file exists in your lib folder
 
 void main() {
   runApp(const ExpenseTrackerApp());
@@ -18,7 +19,8 @@ class ExpenseTrackerApp extends StatelessWidget {
         primaryColor: const Color(0xFF00C853), // Success Green
         cardColor: const Color(0xFF2D2E33), // Dark Theme Card
       ),
-      home: const HomeScreen(),
+      // Starts with the Splash Screen
+      home: const SplashScreen(),
     );
   }
 }
@@ -44,7 +46,7 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  // --- REFACTORED BUILDING BLOCKS ---
+  // --- BUILDING BLOCKS ---
 
   Widget _buildBalanceCard(BuildContext context) {
     return Padding(
@@ -104,30 +106,13 @@ class HomeScreen extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 20),
         children: [
           _buildTransactionRow(
-            Icons.shopping_cart,
-            "Groceries",
-            "-450 ETB",
-            "Today",
-          ),
+              Icons.shopping_cart, "Groceries", "-450 ETB", "Today"),
           _buildTransactionRow(
-            Icons.restaurant,
-            "Dinner",
-            "-300 ETB",
-            "Yesterday",
-          ),
+              Icons.restaurant, "Dinner", "-300 ETB", "Yesterday"),
+          _buildTransactionRow(Icons.work, "Salary", "+5,000 ETB", "April 10",
+              isIncome: true),
           _buildTransactionRow(
-            Icons.work,
-            "Salary",
-            "+5,000 ETB",
-            "April 10",
-            isIncome: true,
-          ),
-          _buildTransactionRow(
-            Icons.directions_car,
-            "Fuel",
-            "-800 ETB",
-            "April 08",
-          ),
+              Icons.directions_car, "Fuel", "-800 ETB", "April 08"),
         ],
       ),
     );
@@ -157,12 +142,8 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildTransactionRow(
-    IconData icon,
-    String title,
-    String amount,
-    String date, {
-    bool isIncome = false,
-  }) {
+      IconData icon, String title, String amount, String date,
+      {bool isIncome = false}) {
     return Card(
       elevation: 0,
       color: Colors.grey[50],
