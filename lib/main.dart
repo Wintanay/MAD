@@ -104,13 +104,30 @@ class HomeScreen extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 20),
         children: [
           _buildTransactionRow(
-              Icons.shopping_cart, "Groceries", "-450 ETB", "Today"),
+            Icons.shopping_cart,
+            "Groceries",
+            "-450 ETB",
+            "Today",
+          ),
           _buildTransactionRow(
-              Icons.restaurant, "Dinner", "-300 ETB", "Yesterday"),
-          _buildTransactionRow(Icons.work, "Salary", "+5,000 ETB", "April 10",
-              isIncome: true),
+            Icons.restaurant,
+            "Dinner",
+            "-300 ETB",
+            "Yesterday",
+          ),
           _buildTransactionRow(
-              Icons.directions_car, "Fuel", "-800 ETB", "April 08"),
+            Icons.work,
+            "Salary",
+            "+5,000 ETB",
+            "April 10",
+            isIncome: true,
+          ),
+          _buildTransactionRow(
+            Icons.directions_car,
+            "Fuel",
+            "-800 ETB",
+            "April 08",
+          ),
         ],
       ),
     );
