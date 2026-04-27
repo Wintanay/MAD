@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'splashscreen.dart';
 import 'loginscreen.dart';
 import 'addscreen.dart';
+import 'chartscreen.dart';
 
 void main() {
   runApp(const ExpenseTrackerApp());
@@ -16,28 +17,31 @@ class ExpenseTrackerApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Personal Expense Tracker',
       theme: ThemeData(
-        brightness: Brightness.light,
-        scaffoldBackgroundColor: Colors.white,
-        primaryColor: const Color(0xFF00C853),
+        primaryColor: const Color(0xFF00C853), // Your project's green
       ),
+      // Set the initial screen to SplashScreen
       home: const SplashScreen(),
     );
   }
 }
 
-class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+class MainNavigation extends StatefulWidget {
+  const MainNavigation({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<MainNavigation> createState() => _MainNavigationState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _MainNavigationState extends State<MainNavigation> {
+  int _selectedIndex = 0; // 0 = Home, 1 = Charts, 2 = Records
+
+  // --- CORE DATA (Maintained here so all screens are updated) ---
   double totalBalance = 0.00;
   double totalIncome = 0.00;
   double totalExpense = 0.00;
   List<Map<String, dynamic>> transactions = [];
 
+  // Logic to handle result from Wintanay's Add Screen
   void _navigateToAddScreen() async {
     final result = await Navigator.push(
       context,
@@ -49,7 +53,7 @@ class _HomeScreenState extends State<HomeScreen> {
         transactions.insert(0, result);
         double amount = result['amount'];
 
-        // Logical check to update balance correctly
+        // Updates balance based on Income/Expense type
         if (result['type'] == 'Income') {
           totalIncome += amount;
           totalBalance += amount;
@@ -63,17 +67,17 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // List of screens to display in the main body
+    final List<Widget> _pages = [
+      _buildHomeContent(), // Tnebeb's Home Logic
+      const ChartsScreen(), // Debora's Spending Analysis
+      const Center(
+          child: Text("Records Screen")), // Debora's Records Placeholder
+    ];
+
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildBalanceCard(),
-            const SizedBox(height: 20),
-            _buildTransactionList(),
-          ],
-        ),
-      ),
+      body: SafeArea(child: _pages[_selectedIndex]),
       floatingActionButton: FloatingActionButton(
         onPressed: _navigateToAddScreen,
         backgroundColor: const Color(0xFF00C853),
@@ -84,6 +88,25 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // --- TNEBEB'S ORIGINAL HOME UI ---
+  Widget _buildHomeContent() {
+    return Column(
+      children: [
+        _buildBalanceCard(),
+        const SizedBox(height: 20),
+        const Align(
+          alignment: Alignment.centerLeft,
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20),
+            child: Text("Recent Transactions",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          ),
+        ),
+        _buildTransactionList(),
+      ],
+    );
+  }
+
   Widget _buildBalanceCard() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
@@ -91,8 +114,9 @@ class _HomeScreenState extends State<HomeScreen> {
         width: double.infinity,
         padding: const EdgeInsets.all(25),
         decoration: BoxDecoration(
-            color: const Color(0xFF2D2E33),
-            borderRadius: BorderRadius.circular(24)),
+          color: const Color(0xFF2D2E33),
+          borderRadius: BorderRadius.circular(24),
+        ),
         child: Column(
           children: [
             const Text("Total Balance",
@@ -143,10 +167,8 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.article_outlined, size: 100, color: Colors.grey[300]),
-              const SizedBox(height: 15),
-              const Text("No Transactions yet",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              Icon(Icons.receipt_long, size: 80, color: Colors.grey[200]),
+              Text("No data yet", style: TextStyle(color: Colors.grey[400])),
             ],
           ),
         ),
@@ -160,12 +182,12 @@ class _HomeScreenState extends State<HomeScreen> {
           bool isIncome = item['type'] == 'Income';
           return ListTile(
             leading: CircleAvatar(
-                backgroundColor: const Color(0xFFF5F5F5),
+                backgroundColor: Colors.grey[100],
                 child: Icon(
                     isIncome
-                        ? Icons.account_balance_wallet
-                        : Icons.shopping_bag,
-                    color: Colors.black)),
+                        ? Icons.keyboard_double_arrow_up
+                        : Icons.keyboard_double_arrow_down,
+                    color: isIncome ? Colors.green : Colors.red)),
             title: Text(item['category'],
                 style: const TextStyle(fontWeight: FontWeight.bold)),
             trailing: Text(
@@ -179,6 +201,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // --- BOTTOM NAVIGATION UI ---
   Widget _buildBottomNav() {
     return Padding(
       padding: const EdgeInsets.only(left: 20, right: 20, bottom: 25),
@@ -190,22 +213,30 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _buildNavItem(Icons.home_filled, "Home", const Color(0xFF00C853)),
-            _buildNavItem(Icons.bar_chart_outlined, "Charts", Colors.white),
-            _buildNavItem(Icons.description_outlined, "Records", Colors.white),
+            _navItem(Icons.home_filled, "Home", 0),
+            _navItem(Icons.bar_chart_outlined, "Charts", 1),
+            _navItem(Icons.description_outlined, "Records", 2),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildNavItem(IconData icon, String label, Color color) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(icon, color: color),
-        Text(label, style: TextStyle(color: color, fontSize: 12))
-      ],
+  Widget _navItem(IconData icon, String label, int index) {
+    bool isSelected = _selectedIndex == index;
+    return GestureDetector(
+      onTap: () => setState(() => _selectedIndex = index),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon,
+              color: isSelected ? const Color(0xFF00C853) : Colors.white),
+          Text(label,
+              style: TextStyle(
+                  color: isSelected ? const Color(0xFF00C853) : Colors.white,
+                  fontSize: 12)),
+        ],
+      ),
     );
   }
 }

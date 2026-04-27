@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'main.dart'; // To navigate to the HomeScreen later
+import 'main.dart'; // Ensure this points to the file containing MainNavigation
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -18,7 +18,7 @@ class LoginScreen extends StatelessWidget {
               // Green Circle Logo
               const CircleAvatar(
                 radius: 50,
-                backgroundColor: Color(0xFF00C853), // Success Green
+                backgroundColor: Color(0xFF00C853),
                 child: Icon(Icons.account_balance_wallet,
                     color: Colors.white, size: 50),
               ),
@@ -33,11 +33,9 @@ class LoginScreen extends StatelessWidget {
               ),
               const SizedBox(height: 40),
 
-              // Email Field
               _buildTextField(label: 'Email', hint: 'Enter your email'),
               const SizedBox(height: 20),
 
-              // Password Field
               _buildTextField(
                   label: 'Password',
                   hint: 'Enter your password',
@@ -60,11 +58,11 @@ class LoginScreen extends StatelessWidget {
                 height: 50,
                 child: ElevatedButton(
                   onPressed: () {
-                    // This takes the user to your Dashboard
+                    // UPDATED: Points to MainNavigation instead of HomeScreen
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
-                          builder: (context) => const HomeScreen()),
+                          builder: (context) => const MainNavigation()),
                     );
                   },
                   style: ElevatedButton.styleFrom(
