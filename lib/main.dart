@@ -3,6 +3,7 @@ import 'splashscreen.dart';
 import 'loginscreen.dart';
 import 'addscreen.dart';
 import 'chartscreen.dart';
+import 'recordscreen.dart'; // Import Debora's Records Screen
 
 void main() {
   runApp(const ExpenseTrackerApp());
@@ -15,11 +16,6 @@ class ExpenseTrackerApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Personal Expense Tracker',
-      theme: ThemeData(
-        primaryColor: const Color(0xFF00C853), // Your project's green
-      ),
-      // Set the initial screen to SplashScreen
       home: const SplashScreen(),
     );
   }
@@ -33,15 +29,14 @@ class MainNavigation extends StatefulWidget {
 }
 
 class _MainNavigationState extends State<MainNavigation> {
-  int _selectedIndex = 0; // 0 = Home, 1 = Charts, 2 = Records
+  int _selectedIndex = 0;
 
-  // --- CORE DATA (Maintained here so all screens are updated) ---
+  // GLOBAL DATA: Shared between Home and Records
   double totalBalance = 0.00;
   double totalIncome = 0.00;
   double totalExpense = 0.00;
   List<Map<String, dynamic>> transactions = [];
 
-  // Logic to handle result from Wintanay's Add Screen
   void _navigateToAddScreen() async {
     final result = await Navigator.push(
       context,
@@ -52,8 +47,6 @@ class _MainNavigationState extends State<MainNavigation> {
       setState(() {
         transactions.insert(0, result);
         double amount = result['amount'];
-
-        // Updates balance based on Income/Expense type
         if (result['type'] == 'Income') {
           totalIncome += amount;
           totalBalance += amount;
@@ -67,12 +60,11 @@ class _MainNavigationState extends State<MainNavigation> {
 
   @override
   Widget build(BuildContext context) {
-    // List of screens to display in the main body
+    // List of screens - Index 2 now passes the real transactions list
     final List<Widget> _pages = [
-      _buildHomeContent(), // Tnebeb's Home Logic
-      const ChartsScreen(), // Debora's Spending Analysis
-      const Center(
-          child: Text("Records Screen")), // Debora's Records Placeholder
+      _buildHomeContent(),
+      const ChartsScreen(),
+      RecordsScreen(transactions: transactions), // Passing the list to Records
     ];
 
     return Scaffold(
@@ -88,19 +80,14 @@ class _MainNavigationState extends State<MainNavigation> {
     );
   }
 
-  // --- TNEBEB'S ORIGINAL HOME UI ---
   Widget _buildHomeContent() {
     return Column(
       children: [
         _buildBalanceCard(),
         const SizedBox(height: 20),
-        const Align(
-          alignment: Alignment.centerLeft,
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20),
-            child: Text("Recent Transactions",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          ),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 20),
+          child: Align(alignment: Alignment.centerLeft, child: Text("Recent", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
         ),
         _buildTransactionList(),
       ],
@@ -109,38 +96,20 @@ class _MainNavigationState extends State<MainNavigation> {
 
   Widget _buildBalanceCard() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+      padding: const EdgeInsets.all(20.0),
       child: Container(
-        width: double.infinity,
         padding: const EdgeInsets.all(25),
-        decoration: BoxDecoration(
-          color: const Color(0xFF2D2E33),
-          borderRadius: BorderRadius.circular(24),
-        ),
+        decoration: BoxDecoration(color: const Color(0xFF2D2E33), borderRadius: BorderRadius.circular(24)),
         child: Column(
           children: [
-            const Text("Total Balance",
-                style: TextStyle(color: Colors.white70, fontSize: 16)),
-            const SizedBox(height: 8),
-            Text(
-              "${totalBalance.toStringAsFixed(2)} ETB",
-              style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 25),
+            const Text("Total Balance", style: TextStyle(color: Colors.white70)),
+            Text("${totalBalance.toStringAsFixed(2)} ETB", style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 20),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                _buildStatItem(
-                    "Income",
-                    "+${totalIncome.toStringAsFixed(2)} ETB",
-                    Colors.greenAccent),
-                _buildStatItem(
-                    "Expense",
-                    "-${totalExpense.toStringAsFixed(2)} ETB",
-                    Colors.redAccent),
+                _stat("Income", "+${totalIncome.toStringAsFixed(2)}", Colors.greenAccent),
+                _stat("Expense", "-${totalExpense.toStringAsFixed(2)}", Colors.redAccent),
               ],
             ),
           ],
@@ -149,94 +118,44 @@ class _MainNavigationState extends State<MainNavigation> {
     );
   }
 
-  Widget _buildStatItem(String title, String amount, Color color) {
-    return Column(
-      children: [
-        Text(title, style: const TextStyle(color: Colors.white70)),
-        Text(amount,
-            style: TextStyle(
-                color: color, fontWeight: FontWeight.bold, fontSize: 16)),
-      ],
-    );
-  }
-
+  Widget _stat(String label, String val, Color col) => Column(children: [Text(label, style: const TextStyle(color: Colors.white70)), Text(val, style: TextStyle(color: col, fontWeight: FontWeight.bold))]);
   Widget _buildTransactionList() {
-    if (transactions.isEmpty) {
-      return Expanded(
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.receipt_long, size: 80, color: Colors.grey[200]),
-              Text("No data yet", style: TextStyle(color: Colors.grey[400])),
-            ],
-          ),
-        ),
-      );
-    }
     return Expanded(
-      child: ListView.builder(
-        itemCount: transactions.length,
-        itemBuilder: (context, index) {
-          final item = transactions[index];
-          bool isIncome = item['type'] == 'Income';
-          return ListTile(
-            leading: CircleAvatar(
-                backgroundColor: Colors.grey[100],
-                child: Icon(
-                    isIncome
-                        ? Icons.keyboard_double_arrow_up
-                        : Icons.keyboard_double_arrow_down,
-                    color: isIncome ? Colors.green : Colors.red)),
-            title: Text(item['category'],
-                style: const TextStyle(fontWeight: FontWeight.bold)),
-            trailing: Text(
-                "${isIncome ? '+' : '-'}${item['amount'].toStringAsFixed(2)} ETB",
-                style: TextStyle(
-                    color: isIncome ? Colors.green : Colors.red,
-                    fontWeight: FontWeight.bold)),
-          );
-        },
-      ),
+      child: transactions.isEmpty 
+        ? const Center(child: Text("No records yet"))
+        : ListView.builder(
+            itemCount: transactions.length > 5 ? 5 : transactions.length, // Show only recent 5 on Home
+            itemBuilder: (context, index) {
+              final item = transactions[index];
+              return ListTile(
+                title: Text(item['category']),
+                trailing: Text("${item['type'] == 'Income' ? '+' : '-'}${item['amount']}", style: TextStyle(color: item['type'] == 'Income' ? Colors.green : Colors.red)),
+              );
+            },
+          ),
     );
   }
 
-  // --- BOTTOM NAVIGATION UI ---
   Widget _buildBottomNav() {
-    return Padding(
-      padding: const EdgeInsets.only(left: 20, right: 20, bottom: 25),
-      child: Container(
-        height: 75,
-        decoration: BoxDecoration(
-            color: const Color(0xFF1E1E1E),
-            borderRadius: BorderRadius.circular(30)),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _navItem(Icons.home_filled, "Home", 0),
-            _navItem(Icons.bar_chart_outlined, "Charts", 1),
-            _navItem(Icons.description_outlined, "Records", 2),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _navItem(IconData icon, String label, int index) {
-    bool isSelected = _selectedIndex == index;
-    return GestureDetector(
-      onTap: () => setState(() => _selectedIndex = index),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+    return Container(
+      height: 80,
+      margin: const EdgeInsets.all(20),
+      decoration: BoxDecoration(color: const Color(0xFF1E1E1E), borderRadius: BorderRadius.circular(30)),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          Icon(icon,
-              color: isSelected ? const Color(0xFF00C853) : Colors.white),
-          Text(label,
-              style: TextStyle(
-                  color: isSelected ? const Color(0xFF00C853) : Colors.white,
-                  fontSize: 12)),
+          _navItem(Icons.home, 0),
+          _navItem(Icons.bar_chart, 1),
+          _navItem(Icons.list_alt, 2),
         ],
       ),
+    );
+  }
+
+  Widget _navItem(IconData icon, int index) {
+    return IconButton(
+      icon: Icon(icon, color: _selectedIndex == index ? const Color(0xFF00C853) : Colors.white),
+      onPressed: () => setState(() => _selectedIndex = index),
     );
   }
 }
