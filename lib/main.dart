@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'screens/splash_screen.dart';
-import 'screens/login_screen.dart';
 import 'screens/add_screen.dart';
 import 'screens/chart_screen.dart';
 import 'screens/record_screen.dart'; // Import Debora's Records Screen
