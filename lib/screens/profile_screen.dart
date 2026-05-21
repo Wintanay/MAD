@@ -223,7 +223,7 @@ class ProfileScreen extends StatelessWidget {
             height: 50,
             padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
-             color: Colors.someColor.withOpacity(0.5),
+             color: Colors.black.withValues(alpha: 0.5),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Align(
