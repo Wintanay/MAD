@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'screens/splash_screen.dart';
-import 'screens/add_screen.dart';
 import 'screens/chart_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/record_screen.dart';
+import 'screens/add_screen.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(const ExpenseTrackerApp());
 }
 
@@ -41,7 +47,7 @@ class _MainNavigationState extends State<MainNavigation> {
   void _navigateToAddScreen() async {
     final newTransaction = await Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const AddExpenseScreen()),
+      MaterialPageRoute(builder: (context) => AddExpenseScreen()),
     );
 
     if (newTransaction != null && newTransaction is Map<String, dynamic>) {
@@ -51,7 +57,6 @@ class _MainNavigationState extends State<MainNavigation> {
     }
   }
 
-  // CHANGE 1: Changed from 'late final List' to 'get' so home rebuilds on state change
   List<Widget> get _pages => [
     _buildHomeContent(),
     const ChartsScreen(),
@@ -82,7 +87,6 @@ class _MainNavigationState extends State<MainNavigation> {
       bottomNavigationBar: _buildBottomNav(),
     );
   }
-
   Widget _buildBottomNav() {
     return Container(
       margin: const EdgeInsets.only(left: 16, right: 16, bottom: 20),
@@ -120,9 +124,11 @@ class _MainNavigationState extends State<MainNavigation> {
             BottomNavigationBarItem(
                 icon: Icon(Icons.home_filled, size: 24), label: 'Home'),
             BottomNavigationBarItem(
-                icon: Icon(Icons.bar_chart_outlined, size: 24), label: 'Charts'),
+                icon: Icon(Icons.bar_chart_outlined, size: 24),
+                label: 'Charts'),
             BottomNavigationBarItem(
-                icon: Icon(Icons.receipt_long_outlined, size: 24), label: 'Records'),
+                icon: Icon(Icons.receipt_long_outlined, size: 24),
+                label: 'Records'),
             BottomNavigationBarItem(
                 icon: Icon(Icons.person_outline, size: 24), label: 'Profile'),
           ],
@@ -131,7 +137,6 @@ class _MainNavigationState extends State<MainNavigation> {
     );
   }
 
-  // CHANGE 2: _buildHomeContent now calculates real totals from dummyTransactions
   Widget _buildHomeContent() {
     double totalIncome = dummyTransactions
         .where((t) => t['type'] == 'Income')
@@ -142,7 +147,6 @@ class _MainNavigationState extends State<MainNavigation> {
         .fold(0.0, (sum, t) => sum + (t['amount'] as double));
 
     double totalBalance = totalIncome - totalExpense;
-
     return Padding(
       padding: const EdgeInsets.all(20.0),
       child: Column(
@@ -184,7 +188,6 @@ class _MainNavigationState extends State<MainNavigation> {
             ),
           ),
           const SizedBox(height: 20),
-          // CHANGE 3: Shows transaction list when data exists, empty state when not
           dummyTransactions.isEmpty
               ? const Expanded(
                   child: Center(
@@ -224,8 +227,8 @@ class _MainNavigationState extends State<MainNavigation> {
                           ),
                         ),
                         title: Text(t['category'],
-                            style:
-                                const TextStyle(fontWeight: FontWeight.bold)),
+                            style: const TextStyle(
+                                fontWeight: FontWeight.bold)),
                         subtitle: Text(t['type']),
                         trailing: Text(
                           "${isIncome ? '+' : '-'}${(t['amount'] as double).toStringAsFixed(2)} ETB",
@@ -244,7 +247,6 @@ class _MainNavigationState extends State<MainNavigation> {
       ),
     );
   }
-
   Widget _balanceStatColumn(String label, String amount, Color color) {
     return Column(
       children: [
