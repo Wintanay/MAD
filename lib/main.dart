@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'screens/splash_screen.dart';
 import 'screens/add_screen.dart';
 import 'screens/chart_screen.dart';
-import 'screens/record_screen.dart'; // Import Debora's Records Screen
+import 'screens/profile_screen.dart';
+import 'screens/record_screen.dart';
 
 void main() {
   runApp(const ExpenseTrackerApp());
@@ -14,7 +15,12 @@ class ExpenseTrackerApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      title: 'Personal Expense Tracker',
       debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        scaffoldBackgroundColor: Colors.white,
+        primaryColor: const Color(0xFF00C853),
+      ),
       home: const SplashScreen(),
     );
   }
@@ -30,131 +36,225 @@ class MainNavigation extends StatefulWidget {
 class _MainNavigationState extends State<MainNavigation> {
   int _selectedIndex = 0;
 
-  // GLOBAL DATA: Shared between Home and Records
-  double totalBalance = 0.00;
-  double totalIncome = 0.00;
-  double totalExpense = 0.00;
-  List<Map<String, dynamic>> transactions = [];
+  final List<Map<String, dynamic>> dummyTransactions = [];
 
   void _navigateToAddScreen() async {
-    final result = await Navigator.push(
+    final newTransaction = await Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const AddExpenseScreen()),
     );
 
-    if (result != null && result is Map<String, dynamic>) {
+    if (newTransaction != null && newTransaction is Map<String, dynamic>) {
       setState(() {
-        transactions.insert(0, result);
-        double amount = result['amount'];
-        if (result['type'] == 'Income') {
-          totalIncome += amount;
-          totalBalance += amount;
-        } else {
-          totalExpense += amount;
-          totalBalance -= amount;
-        }
+        dummyTransactions.add(newTransaction);
       });
     }
   }
 
+  // CHANGE 1: Changed from 'late final List' to 'get' so home rebuilds on state change
+  List<Widget> get _pages => [
+    _buildHomeContent(),
+    const ChartsScreen(),
+    RecordsScreen(transactions: dummyTransactions),
+    const ProfileScreen(),
+  ];
+
   @override
   Widget build(BuildContext context) {
-    // List of screens - Index 2 now passes the real transactions list
-    final List<Widget> _pages = [
-      _buildHomeContent(),
-      const ChartsScreen(),
-      RecordsScreen(transactions: transactions), // Passing the list to Records
-    ];
-
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SafeArea(child: _pages[_selectedIndex]),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _navigateToAddScreen,
-        backgroundColor: const Color(0xFF00C853),
-        shape: const CircleBorder(),
-        child: const Icon(Icons.add, color: Colors.white, size: 35),
+      extendBody: true,
+      body: SafeArea(
+        bottom: false,
+        child: _pages[_selectedIndex],
       ),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 25),
+        child: FloatingActionButton(
+          onPressed: _navigateToAddScreen,
+          backgroundColor: const Color(0xFF00C853),
+          shape: const CircleBorder(),
+          elevation: 4,
+          child: const Icon(Icons.add, color: Colors.white, size: 35),
+        ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       bottomNavigationBar: _buildBottomNav(),
     );
   }
 
-  Widget _buildHomeContent() {
-    return Column(
-      children: [
-        _buildBalanceCard(),
-        const SizedBox(height: 20),
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 20),
-          child: Align(alignment: Alignment.centerLeft, child: Text("Recent", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
-        ),
-        _buildTransactionList(),
-      ],
-    );
-  }
-
-  Widget _buildBalanceCard() {
-    return Padding(
-      padding: const EdgeInsets.all(20.0),
-      child: Container(
-        padding: const EdgeInsets.all(25),
-        decoration: BoxDecoration(color: const Color(0xFF2D2E33), borderRadius: BorderRadius.circular(24)),
-        child: Column(
-          children: [
-            const Text("Total Balance", style: TextStyle(color: Colors.white70)),
-            Text("${totalBalance.toStringAsFixed(2)} ETB", style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _stat("Income", "+${totalIncome.toStringAsFixed(2)}", Colors.greenAccent),
-                _stat("Expense", "-${totalExpense.toStringAsFixed(2)}", Colors.redAccent),
-              ],
-            ),
+  Widget _buildBottomNav() {
+    return Container(
+      margin: const EdgeInsets.only(left: 16, right: 16, bottom: 20),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E1E1E),
+        borderRadius: BorderRadius.circular(30),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.15),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(30),
+        child: BottomNavigationBar(
+          currentIndex: _selectedIndex,
+          onTap: (index) {
+            setState(() {
+              _selectedIndex = index;
+            });
+          },
+          backgroundColor: const Color(0xFF1E1E1E),
+          selectedItemColor: const Color(0xFF00C853),
+          unselectedItemColor: Colors.grey[400],
+          type: BottomNavigationBarType.fixed,
+          showSelectedLabels: true,
+          showUnselectedLabels: true,
+          selectedLabelStyle:
+              const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+          unselectedLabelStyle: const TextStyle(fontSize: 11),
+          elevation: 0,
+          items: const [
+            BottomNavigationBarItem(
+                icon: Icon(Icons.home_filled, size: 24), label: 'Home'),
+            BottomNavigationBarItem(
+                icon: Icon(Icons.bar_chart_outlined, size: 24), label: 'Charts'),
+            BottomNavigationBarItem(
+                icon: Icon(Icons.receipt_long_outlined, size: 24), label: 'Records'),
+            BottomNavigationBarItem(
+                icon: Icon(Icons.person_outline, size: 24), label: 'Profile'),
           ],
         ),
       ),
     );
   }
 
-  Widget _stat(String label, String val, Color col) => Column(children: [Text(label, style: const TextStyle(color: Colors.white70)), Text(val, style: TextStyle(color: col, fontWeight: FontWeight.bold))]);
-  Widget _buildTransactionList() {
-    return Expanded(
-      child: transactions.isEmpty 
-        ? const Center(child: Text("No records yet"))
-        : ListView.builder(
-            itemCount: transactions.length > 5 ? 5 : transactions.length, // Show only recent 5 on Home
-            itemBuilder: (context, index) {
-              final item = transactions[index];
-              return ListTile(
-                title: Text(item['category']),
-                trailing: Text("${item['type'] == 'Income' ? '+' : '-'}${item['amount']}", style: TextStyle(color: item['type'] == 'Income' ? Colors.green : Colors.red)),
-              );
-            },
-          ),
-    );
-  }
+  // CHANGE 2: _buildHomeContent now calculates real totals from dummyTransactions
+  Widget _buildHomeContent() {
+    double totalIncome = dummyTransactions
+        .where((t) => t['type'] == 'Income')
+        .fold(0.0, (sum, t) => sum + (t['amount'] as double));
 
-  Widget _buildBottomNav() {
-    return Container(
-      height: 80,
-      margin: const EdgeInsets.all(20),
-      decoration: BoxDecoration(color: const Color(0xFF1E1E1E), borderRadius: BorderRadius.circular(30)),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
+    double totalExpense = dummyTransactions
+        .where((t) => t['type'] == 'Expense')
+        .fold(0.0, (sum, t) => sum + (t['amount'] as double));
+
+    double totalBalance = totalIncome - totalExpense;
+
+    return Padding(
+      padding: const EdgeInsets.all(20.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _navItem(Icons.home, 0),
-          _navItem(Icons.bar_chart, 1),
-          _navItem(Icons.list_alt, 2),
+          const SizedBox(height: 20),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
+            decoration: BoxDecoration(
+              color: const Color(0xFF2A2C32),
+              borderRadius: BorderRadius.circular(24),
+            ),
+            child: Column(
+              children: [
+                const Text("Total Balance",
+                    style: TextStyle(color: Colors.white70, fontSize: 16)),
+                const SizedBox(height: 8),
+                Text(
+                  "${totalBalance.toStringAsFixed(2)} ETB",
+                  style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _balanceStatColumn("Income",
+                        "+${totalIncome.toStringAsFixed(2)} ETB",
+                        const Color(0xFF00C853)),
+                    _balanceStatColumn("Expense",
+                        "-${totalExpense.toStringAsFixed(2)} ETB",
+                        const Color(0xFFEF5350)),
+                  ],
+                )
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+          // CHANGE 3: Shows transaction list when data exists, empty state when not
+          dummyTransactions.isEmpty
+              ? const Expanded(
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.description_outlined,
+                            size: 100, color: Colors.grey),
+                        SizedBox(height: 16),
+                        Text("No Transactions yet",
+                            style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black)),
+                      ],
+                    ),
+                  ),
+                )
+              : Expanded(
+                  child: ListView.builder(
+                    itemCount: dummyTransactions.length,
+                    itemBuilder: (context, index) {
+                      final t = dummyTransactions[index];
+                      bool isIncome = t['type'] == 'Income';
+                      return ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor: isIncome
+                              ? const Color(0xFFE8F5E9)
+                              : const Color(0xFFFFEBEE),
+                          child: Icon(
+                            isIncome
+                                ? Icons.arrow_downward
+                                : Icons.arrow_upward,
+                            color: isIncome
+                                ? const Color(0xFF00C853)
+                                : const Color(0xFFEF5350),
+                          ),
+                        ),
+                        title: Text(t['category'],
+                            style:
+                                const TextStyle(fontWeight: FontWeight.bold)),
+                        subtitle: Text(t['type']),
+                        trailing: Text(
+                          "${isIncome ? '+' : '-'}${(t['amount'] as double).toStringAsFixed(2)} ETB",
+                          style: TextStyle(
+                            color: isIncome
+                                ? const Color(0xFF00C853)
+                                : const Color(0xFFEF5350),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
         ],
       ),
     );
   }
 
-  Widget _navItem(IconData icon, int index) {
-    return IconButton(
-      icon: Icon(icon, color: _selectedIndex == index ? const Color(0xFF00C853) : Colors.white),
-      onPressed: () => setState(() => _selectedIndex = index),
+  Widget _balanceStatColumn(String label, String amount, Color color) {
+    return Column(
+      children: [
+        Text(label,
+            style: const TextStyle(color: Colors.white70, fontSize: 14)),
+        const SizedBox(height: 4),
+        Text(amount,
+            style: TextStyle(
+                color: color, fontSize: 16, fontWeight: FontWeight.bold)),
+      ],
     );
   }
 }
