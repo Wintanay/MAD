@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'main.dart'; // Ensure this points to the file containing MainNavigation
+import '../main.dart'; // Ensure this points to the file containing MainNavigation
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
