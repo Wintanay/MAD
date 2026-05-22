@@ -1,8 +1,52 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-
-class ForgotPasswordScreen extends StatelessWidget {
+class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
+
+  @override
+  State<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
+}
+
+class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
+  final TextEditingController _emailController = TextEditingController();
+  bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _sendResetLink() async {
+    if (_emailController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter your email')),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      await FirebaseAuth.instance.sendPasswordResetEmail(
+        email: _emailController.text.trim(),
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Reset link sent! Check your email.')),
+      );
+      Navigator.pop(context);
+    } on FirebaseAuthException catch (e) {
+      String message = 'Failed to send reset link';
+      if (e.code == 'user-not-found') message = 'No user found with this email';
+      if (e.code == 'invalid-email') message = 'Invalid email address';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -15,7 +59,6 @@ class ForgotPasswordScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const SizedBox(height: 100),
-              // Green Circle Logo with Wallet Icon
               const CircleAvatar(
                 radius: 50,
                 backgroundColor: Color(0xFF00C853),
@@ -37,42 +80,37 @@ class ForgotPasswordScreen extends StatelessWidget {
                 style: TextStyle(color: Colors.grey, fontSize: 15),
               ),
               const SizedBox(height: 40),
-
-              // Email Field
-              _buildTextField(label: 'Email', hint: 'Enter your email'),
-              
+              _buildTextField(
+                label: 'Email',
+                hint: 'Enter your email',
+                controller: _emailController,
+              ),
               const SizedBox(height: 30),
-
-              // Send Reset Link Button
               SizedBox(
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
-                  onPressed: () {
-                    // Logic to send reset email
-                  },
+                  onPressed: _isLoading ? null : _sendResetLink,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.black,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-                  child: const Text(
-                    'Send Reset Link',
-                    style: TextStyle(color: Colors.white, fontSize: 16),
-                  ),
+                  child: _isLoading
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text(
+                          'Send Reset Link',
+                          style: TextStyle(color: Colors.white, fontSize: 16),
+                        ),
                 ),
               ),
               const SizedBox(height: 15),
-
-              // Back to Sign In Button
               SizedBox(
                 width: double.infinity,
                 height: 50,
                 child: OutlinedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
+                  onPressed: () => Navigator.pop(context),
                   style: OutlinedButton.styleFrom(
                     side: const BorderSide(color: Colors.black),
                     shape: RoundedRectangleBorder(
@@ -99,13 +137,19 @@ class ForgotPasswordScreen extends StatelessWidget {
       ),
     );
   }
-  Widget _buildTextField({required String label, required String hint}) {
+
+  Widget _buildTextField({
+    required String label,
+    required String hint,
+    required TextEditingController controller,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         TextField(
+          controller: controller,
           decoration: InputDecoration(
             hintText: hint,
             filled: true,

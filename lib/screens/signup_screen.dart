@@ -13,8 +13,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
   bool _isLoading = false;
+  bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
 
   @override
   void dispose() {
@@ -45,7 +48,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
     if (_passwordController.text.length < 6) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Password must be at least 6 characters')),
+        const SnackBar(
+            content: Text('Password must be at least 6 characters')),
       );
       return;
     }
@@ -59,7 +63,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
         password: _passwordController.text.trim(),
       );
 
-      await userCredential.user?.updateDisplayName(_nameController.text.trim());
+      await userCredential.user
+          ?.updateDisplayName(_nameController.text.trim());
+      await userCredential.user?.reload();
+
+      if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Account created successfully!')),
@@ -112,38 +120,37 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 style: TextStyle(color: Colors.grey),
               ),
               const SizedBox(height: 40),
-
               _buildTextField(
                 label: 'Full Name',
                 hint: 'Enter your full name',
                 controller: _nameController,
               ),
               const SizedBox(height: 20),
-
               _buildTextField(
                 label: 'Email',
                 hint: 'Enter your email',
                 controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
               ),
               const SizedBox(height: 20),
-
-              _buildTextField(
+              _buildPasswordField(
                 label: 'Password',
                 hint: 'Create a password',
-                isPassword: true,
                 controller: _passwordController,
+                obscure: _obscurePassword,
+                onToggle: () =>
+                    setState(() => _obscurePassword = !_obscurePassword),
               ),
               const SizedBox(height: 20),
-
-              _buildTextField(
+              _buildPasswordField(
                 label: 'Confirm Password',
                 hint: 'Re-enter your password',
-                isPassword: true,
                 controller: _confirmPasswordController,
+                obscure: _obscureConfirmPassword,
+                onToggle: () => setState(
+                    () => _obscureConfirmPassword = !_obscureConfirmPassword),
               ),
-
               const SizedBox(height: 30),
-
               SizedBox(
                 width: double.infinity,
                 height: 50,
@@ -159,12 +166,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       ? const CircularProgressIndicator(color: Colors.white)
                       : const Text(
                           'Sign Up',
-                          style: TextStyle(color: Colors.white, fontSize: 16),
+                          style:
+                              TextStyle(color: Colors.white, fontSize: 16),
                         ),
                 ),
               ),
               const SizedBox(height: 20),
-
               GestureDetector(
                 onTap: () {
                   Navigator.pushReplacement(
@@ -202,7 +209,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     required String label,
     required String hint,
     required TextEditingController controller,
-    bool isPassword = false,
+    TextInputType keyboardType = TextInputType.text,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -211,7 +218,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         const SizedBox(height: 8),
         TextField(
           controller: controller,
-          obscureText: isPassword,
+          keyboardType: keyboardType,
           decoration: InputDecoration(
             hintText: hint,
             filled: true,
@@ -220,8 +227,44 @@ class _SignUpScreenState extends State<SignUpScreen> {
               borderRadius: BorderRadius.circular(10),
               borderSide: BorderSide.none,
             ),
-            suffixIcon:
-                isPassword ? const Icon(Icons.visibility_outlined) : null,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPasswordField({
+    required String label,
+    required String hint,
+    required TextEditingController controller,
+    required bool obscure,
+    required VoidCallback onToggle,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
+        const SizedBox(height: 8),
+        TextField(
+          controller: controller,
+          obscureText: obscure,
+          decoration: InputDecoration(
+            hintText: hint,
+            filled: true,
+            fillColor: Colors.grey[200],
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide.none,
+            ),
+            suffixIcon: IconButton(
+              onPressed: onToggle,
+              icon: Icon(
+                obscure
+                    ? Icons.visibility_outlined
+                    : Icons.visibility_off_outlined,
+                color: Colors.grey,
+              ),
+            ),
           ),
         ),
       ],

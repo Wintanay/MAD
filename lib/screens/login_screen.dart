@@ -15,6 +15,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _isLoading = false;
+  bool _obscurePassword = true;
 
   @override
   void dispose() {
@@ -82,21 +83,14 @@ class _LoginScreenState extends State<LoginScreen> {
                 style: TextStyle(color: Colors.grey),
               ),
               const SizedBox(height: 40),
-
               _buildTextField(
                 label: 'Email',
                 hint: 'Enter your email',
                 controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
               ),
               const SizedBox(height: 20),
-
-              _buildTextField(
-                label: 'Password',
-                hint: 'Enter your password',
-                isPassword: true,
-                controller: _passwordController,
-              ),
-
+              _buildPasswordField(),
               const SizedBox(height: 10),
               Align(
                 alignment: Alignment.centerRight,
@@ -113,7 +107,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
               const SizedBox(height: 20),
-
               SizedBox(
                 width: double.infinity,
                 height: 50,
@@ -132,7 +125,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
               const SizedBox(height: 20),
-
               GestureDetector(
                 onTap: () {
                   Navigator.push(
@@ -168,7 +160,7 @@ class _LoginScreenState extends State<LoginScreen> {
     required String label,
     required String hint,
     required TextEditingController controller,
-    bool isPassword = false,
+    TextInputType keyboardType = TextInputType.text,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -177,7 +169,7 @@ class _LoginScreenState extends State<LoginScreen> {
         const SizedBox(height: 8),
         TextField(
           controller: controller,
-          obscureText: isPassword,
+          keyboardType: keyboardType,
           decoration: InputDecoration(
             hintText: hint,
             filled: true,
@@ -186,8 +178,40 @@ class _LoginScreenState extends State<LoginScreen> {
               borderRadius: BorderRadius.circular(10),
               borderSide: BorderSide.none,
             ),
-            suffixIcon:
-                isPassword ? const Icon(Icons.visibility_outlined) : null,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPasswordField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Password',
+            style: TextStyle(fontWeight: FontWeight.bold)),
+        const SizedBox(height: 8),
+        TextField(
+          controller: _passwordController,
+          obscureText: _obscurePassword,
+          decoration: InputDecoration(
+            hintText: 'Enter your password',
+            filled: true,
+            fillColor: Colors.grey[200],
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide.none,
+            ),
+            suffixIcon: IconButton(
+              onPressed: () =>
+                  setState(() => _obscurePassword = !_obscurePassword),
+              icon: Icon(
+                _obscurePassword
+                    ? Icons.visibility_outlined
+                    : Icons.visibility_off_outlined,
+                color: Colors.grey,
+              ),
+            ),
           ),
         ),
       ],

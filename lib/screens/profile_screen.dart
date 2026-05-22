@@ -1,10 +1,84 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'login_screen.dart';
 
-class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({super.key});
+class ProfileScreen extends StatefulWidget {
+  final VoidCallback? onBudgetUpdated;
 
-  // Helper method to trigger the pixel-perfect design dialog modal safely without overflow
+  const ProfileScreen({super.key, this.onBudgetUpdated});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  final TextEditingController _budgetController = TextEditingController();
+  bool _editingBudget = false;
+  bool _isLoading = true;
+  double? _currentBudget;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadBudget();
+  }
+
+  Future<void> _loadBudget() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final doc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .collection('settings')
+        .doc('budget')
+        .get();
+
+    if (doc.exists) {
+      final data = doc.data();
+      if (data != null && data['monthly'] != null) {
+        setState(() {
+          _currentBudget = (data['monthly'] as num).toDouble();
+          _budgetController.text = _currentBudget!.toStringAsFixed(0);
+        });
+      }
+    }
+
+    setState(() => _isLoading = false);
+  }
+
+  Future<void> _saveBudget() async {
+    final double? budget = double.tryParse(_budgetController.text);
+    if (budget == null || budget <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Enter a valid budget amount")),
+      );
+      return;
+    }
+
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .collection('settings')
+        .doc('budget')
+        .set({'monthly': budget});
+
+    setState(() {
+      _currentBudget = budget;
+      _editingBudget = false;
+    });
+
+    widget.onBudgetUpdated?.call();
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Budget saved!")),
+    );
+  }
+
   void _showLogoutDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -16,17 +90,14 @@ class ProfileScreen extends StatelessWidget {
           ),
           backgroundColor: Colors.white,
           child: Padding(
-            // Reduced vertical padding slightly to maximize available window space
-            padding:
-                const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
+            padding: const EdgeInsets.symmetric(
+                horizontal: 24.0, vertical: 24.0),
             child: SingleChildScrollView(
-              // Fixes the 114-pixel bottom overflow layout constraint bug completely!
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   const SizedBox(height: 8),
-                  // 1. Large Circle Green Exit Icon Emblem
                   Container(
                     width: 80,
                     height: 80,
@@ -41,8 +112,6 @@ class ProfileScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 20),
-
-                  // 2. Heading Header text
                   const Text(
                     "Logout",
                     style: TextStyle(
@@ -51,8 +120,6 @@ class ProfileScreen extends StatelessWidget {
                         color: Colors.black),
                   ),
                   const SizedBox(height: 12),
-
-                  // 3. Subtext Warning message
                   const Text(
                     "Are you sure you want to logout\nfrom your account?",
                     textAlign: TextAlign.center,
@@ -63,13 +130,12 @@ class ProfileScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 28),
-
-                  // 4. Solid Green Confirmation Button
                   SizedBox(
                     width: double.infinity,
                     height: 52,
                     child: ElevatedButton(
-                      onPressed: () {
+                      onPressed: () async {
+                        await FirebaseAuth.instance.signOut();
                         Navigator.pushAndRemoveUntil(
                           context,
                           MaterialPageRoute(
@@ -94,16 +160,14 @@ class ProfileScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  // 5. Clean Bordered Cancel Button
                   SizedBox(
                     width: double.infinity,
                     height: 52,
                     child: OutlinedButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
+                      onPressed: () => Navigator.pop(context),
                       style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Colors.black, width: 1.2),
+                        side: const BorderSide(
+                            color: Colors.black, width: 1.2),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(25),
                         ),
@@ -128,7 +192,26 @@ class ProfileScreen extends StatelessWidget {
   }
 
   @override
+  void dispose() {
+    _budgetController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+    final String displayName = user?.displayName ?? "No name set";
+    final String email = user?.email ?? "No email";
+
+    if (_isLoading) {
+      return const Scaffold(
+        backgroundColor: Colors.white,
+        body: Center(
+          child: CircularProgressIndicator(color: Color(0xFF00C853)),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -145,40 +228,102 @@ class ProfileScreen extends StatelessWidget {
                     size: 55, color: Colors.grey),
               ),
               const SizedBox(height: 12),
-              const Text(
-                "No profile picture",
-                style: TextStyle(
-                    color: Colors.grey,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w500),
+              Text(
+                displayName,
+                style: const TextStyle(
+                    color: Colors.black,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                email,
+                style: const TextStyle(color: Colors.grey, fontSize: 14),
               ),
               const SizedBox(height: 32),
-              _buildStaticInputField("Full Name", "full name"),
-              _buildStaticInputField("Email", "email"),
-              _buildStaticInputField("Phone Number", "phone number"),
-              const SizedBox(height: 32),
-              SizedBox(
-                width: double.infinity,
-                height: 54,
-                child: ElevatedButton(
-                  onPressed: () {},
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF00C853),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
+              _buildInfoField("Full Name", displayName),
+              _buildInfoField("Email", email),
+              // Budget field
+              Padding(
+                padding: const EdgeInsets.only(bottom: 20.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          "Monthly Budget",
+                          style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black),
+                        ),
+                        GestureDetector(
+                          onTap: () {
+                            if (_editingBudget) {
+                              _saveBudget();
+                            } else {
+                              setState(() => _editingBudget = true);
+                            }
+                          },
+                          child: Text(
+                            _editingBudget ? "Save" : "Edit",
+                            style: const TextStyle(
+                              color: Color(0xFF00C853),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    elevation: 0,
-                  ),
-                  child: const Text(
-                    "Create Account",
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold),
-                  ),
+                    const SizedBox(height: 8),
+                    Container(
+                      width: double.infinity,
+                      height: 50,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE0E0E0).withValues(alpha: 0.6),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: _editingBudget
+                          ? TextField(
+                              controller: _budgetController,
+                              keyboardType: TextInputType.number,
+                              decoration: const InputDecoration(
+                                border: InputBorder.none,
+                                hintText: "Enter monthly budget in ETB",
+                                hintStyle: TextStyle(color: Colors.grey),
+                                suffixText: "ETB",
+                              ),
+                              style: TextStyle(
+                                  color: Colors.grey[800], fontSize: 15),
+                            )
+                          : Align(
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                _currentBudget == null
+                                    ? "No budget set"
+                                    : "${_currentBudget!.toStringAsFixed(0)} ETB / month",
+                                style: TextStyle(
+                                    color: Colors.grey[800], fontSize: 15),
+                              ),
+                            ),
+                    ),
+                    if (_currentBudget != null && !_editingBudget)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Text(
+                          "You will be warned when you reach 80% of your budget",
+                          style:
+                              TextStyle(color: Colors.grey[500], fontSize: 12),
+                        ),
+                      ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 12),
               SizedBox(
                 width: double.infinity,
                 height: 54,
@@ -206,7 +351,8 @@ class ProfileScreen extends StatelessWidget {
       ),
     );
   }
-  Widget _buildStaticInputField(String label, String hint) {
+
+  Widget _buildInfoField(String label, String value) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 20.0),
       child: Column(
@@ -215,7 +361,9 @@ class ProfileScreen extends StatelessWidget {
           Text(
             label,
             style: const TextStyle(
-                fontSize: 15, fontWeight: FontWeight.bold, color: Colors.black),
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+                color: Colors.black),
           ),
           const SizedBox(height: 8),
           Container(
@@ -223,14 +371,14 @@ class ProfileScreen extends StatelessWidget {
             height: 50,
             padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
-             color: Colors.black.withValues(alpha: 0.5),
+              color: const Color(0xFFE0E0E0).withValues(alpha: 0.6),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Align(
               alignment: Alignment.centerLeft,
               child: Text(
-                hint,
-                style: TextStyle(color: Colors.grey[600], fontSize: 15),
+                value,
+                style: TextStyle(color: Colors.grey[800], fontSize: 15),
               ),
             ),
           ),
