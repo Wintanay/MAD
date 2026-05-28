@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'dart:math' as math;
+import '../main.dart';
 
 class ChartsScreen extends StatefulWidget {
   final List<Map<String, dynamic>> transactions;
@@ -31,6 +33,7 @@ class _ChartsScreenState extends State<ChartsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Provider.of<ThemeProvider>(context).isDark;
     final filtered = filteredTransactions;
 
     double totalIncome = filtered
@@ -45,19 +48,23 @@ class _ChartsScreenState extends State<ChartsScreen> {
     double expensePercent = total == 0 ? 0 : totalExpense / total;
     double incomePercent = total == 0 ? 0 : totalIncome / total;
 
+    final bgColor = isDark ? const Color(0xFF121212) : Colors.white;
+    final cardColor = isDark ? const Color(0xFF1E1E1E) : const Color(0xFFE8F5E9);
+    final cardColorRed = isDark ? const Color(0xFF2A1A1A) : const Color(0xFFFFEBEE);
+    final textColor = isDark ? Colors.white : Colors.black;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: bgColor,
       appBar: AppBar(
-        title: const Text("Spending Analysis",
-            style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+        title: Text("Spending Analysis",
+            style: TextStyle(color: textColor, fontWeight: FontWeight.bold)),
         centerTitle: true,
-        backgroundColor: Colors.white,
+        backgroundColor: bgColor,
         elevation: 0,
       ),
       body: Column(
         children: [
           const SizedBox(height: 20),
-          // Time Period Selector
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Container(
@@ -75,21 +82,20 @@ class _ChartsScreenState extends State<ChartsScreen> {
             ),
           ),
           const SizedBox(height: 30),
-
           filtered.isEmpty
               ? Expanded(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(Icons.bar_chart_outlined,
-                          size: 100, color: Colors.grey[300]),
+                          size: 100, color: Colors.grey[600]),
                       const SizedBox(height: 20),
-                      const Text(
+                      Text(
                         "No data for this period",
                         style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
-                            color: Colors.black),
+                            color: textColor),
                       ),
                       const Text(
                         "Add transactions to see your analysis",
@@ -102,7 +108,6 @@ class _ChartsScreenState extends State<ChartsScreen> {
                   child: SingleChildScrollView(
                     child: Column(
                       children: [
-                        // Proper Donut Chart
                         SizedBox(
                           height: 220,
                           width: 220,
@@ -110,6 +115,7 @@ class _ChartsScreenState extends State<ChartsScreen> {
                             painter: DonutChartPainter(
                               incomePercent: incomePercent,
                               expensePercent: expensePercent,
+                              isDark: isDark,
                             ),
                             child: Center(
                               child: Column(
@@ -123,10 +129,10 @@ class _ChartsScreenState extends State<ChartsScreen> {
                                   const SizedBox(height: 4),
                                   Text(
                                     "${(expensePercent * 100).toStringAsFixed(0)}%",
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                         fontSize: 28,
                                         fontWeight: FontWeight.bold,
-                                        color: Colors.black),
+                                        color: textColor),
                                   ),
                                 ],
                               ),
@@ -134,7 +140,6 @@ class _ChartsScreenState extends State<ChartsScreen> {
                           ),
                         ),
                         const SizedBox(height: 16),
-                        // Legend
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -144,7 +149,6 @@ class _ChartsScreenState extends State<ChartsScreen> {
                           ],
                         ),
                         const SizedBox(height: 24),
-                        // Income / Expense summary cards
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 20),
                           child: Row(
@@ -153,7 +157,7 @@ class _ChartsScreenState extends State<ChartsScreen> {
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(vertical: 16),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFE8F5E9),
+                                    color: cardColor,
                                     borderRadius: BorderRadius.circular(16),
                                   ),
                                   child: Column(
@@ -178,7 +182,7 @@ class _ChartsScreenState extends State<ChartsScreen> {
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(vertical: 16),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFFFEBEE),
+                                    color: cardColorRed,
                                     borderRadius: BorderRadius.circular(16),
                                   ),
                                   child: Column(
@@ -202,8 +206,7 @@ class _ChartsScreenState extends State<ChartsScreen> {
                           ),
                         ),
                         const SizedBox(height: 30),
-                        // Category breakdown
-                        _buildCategoryBreakdown(filtered),
+                        _buildCategoryBreakdown(filtered, isDark),
                         const SizedBox(height: 30),
                       ],
                     ),
@@ -253,7 +256,7 @@ class _ChartsScreenState extends State<ChartsScreen> {
     );
   }
 
-  Widget _buildCategoryBreakdown(List<Map<String, dynamic>> filtered) {
+  Widget _buildCategoryBreakdown(List<Map<String, dynamic>> filtered, bool isDark) {
     final Map<String, double> categoryTotals = {};
     for (final t in filtered) {
       if (t['type'] == 'Expense') {
@@ -266,14 +269,18 @@ class _ChartsScreenState extends State<ChartsScreen> {
     if (categoryTotals.isEmpty) return const SizedBox();
 
     final total = categoryTotals.values.fold(0.0, (a, b) => a + b);
+    final textColor = isDark ? Colors.white : Colors.black;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text("By Category",
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          Text("By Category",
+              style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: textColor)),
           const SizedBox(height: 12),
           ...categoryTotals.entries.map((entry) {
             final percent = total == 0 ? 0.0 : entry.value / total;
@@ -284,7 +291,7 @@ class _ChartsScreenState extends State<ChartsScreen> {
                   SizedBox(
                     width: 90,
                     child: Text(entry.key,
-                        style: const TextStyle(fontSize: 13)),
+                        style: TextStyle(fontSize: 13, color: textColor)),
                   ),
                   Expanded(
                     child: ClipRRect(
@@ -292,7 +299,9 @@ class _ChartsScreenState extends State<ChartsScreen> {
                       child: LinearProgressIndicator(
                         value: percent,
                         minHeight: 10,
-                        backgroundColor: Colors.grey[200],
+                        backgroundColor: isDark
+                            ? Colors.grey[800]
+                            : Colors.grey[200],
                         color: const Color(0xFFEF5350),
                       ),
                     ),
@@ -300,8 +309,10 @@ class _ChartsScreenState extends State<ChartsScreen> {
                   const SizedBox(width: 8),
                   Text(
                     "${(percent * 100).toStringAsFixed(0)}%",
-                    style: const TextStyle(
-                        fontSize: 12, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: textColor),
                   ),
                 ],
               ),
@@ -316,10 +327,12 @@ class _ChartsScreenState extends State<ChartsScreen> {
 class DonutChartPainter extends CustomPainter {
   final double incomePercent;
   final double expensePercent;
+  final bool isDark;
 
   DonutChartPainter({
     required this.incomePercent,
     required this.expensePercent,
+    this.isDark = false,
   });
 
   @override
@@ -327,10 +340,11 @@ class DonutChartPainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = size.width / 2;
     const strokeWidth = 38.0;
-    final rect = Rect.fromCircle(center: center, radius: radius - strokeWidth / 2);
+    final rect = Rect.fromCircle(
+        center: center, radius: radius - strokeWidth / 2);
 
     final backgroundPaint = Paint()
-      ..color = Colors.grey.shade200
+      ..color = isDark ? Colors.grey.shade800 : Colors.grey.shade200
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth
       ..strokeCap = StrokeCap.butt;
@@ -373,5 +387,6 @@ class DonutChartPainter extends CustomPainter {
   @override
   bool shouldRepaint(DonutChartPainter oldDelegate) =>
       oldDelegate.incomePercent != incomePercent ||
-      oldDelegate.expensePercent != expensePercent;
+      oldDelegate.expensePercent != expensePercent ||
+      oldDelegate.isDark != isDark;
 }

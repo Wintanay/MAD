@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:provider/provider.dart';
+import '../main.dart';
 
 class AddExpenseScreen extends StatefulWidget {
   const AddExpenseScreen({super.key});
@@ -15,6 +17,14 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
   final TextEditingController _amountController = TextEditingController();
   final TextEditingController _notesController = TextEditingController();
   DateTime selectedDate = DateTime.now();
+
+  final List<String> builtInExpense = [
+    "Food", "Transport", "House Rent", "Shopping",
+    "Medical", "Education", "Entertainment", "Utilities"
+  ];
+  final List<String> builtInIncome = [
+    "Salary", "Gift", "Interest", "Freelance", "Investment", "Rental"
+  ];
 
   List<Map<String, dynamic>> expenseCategories = [
     {"name": "Food", "icon": Icons.restaurant},
@@ -78,14 +88,6 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
 
-    final builtInExpense = [
-      "Food", "Transport", "House Rent", "Shopping",
-      "Medical", "Education", "Entertainment", "Utilities"
-    ];
-    final builtInIncome = [
-      "Salary", "Gift", "Interest", "Freelance", "Investment", "Rental"
-    ];
-
     final customExpense = expenseCategories
         .map((c) => c['name'] as String)
         .where((name) => !builtInExpense.contains(name))
@@ -108,6 +110,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
   }
 
   Future<void> _pickDate() async {
+    final isDark = Provider.of<ThemeProvider>(context, listen: false).isDark;
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: selectedDate,
@@ -116,11 +119,18 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: Color(0xFF00C853),
-              onPrimary: Colors.white,
-              onSurface: Colors.black,
-            ),
+            colorScheme: isDark
+                ? const ColorScheme.dark(
+                    primary: Color(0xFF00C853),
+                    onPrimary: Colors.white,
+                    surface: Color(0xFF1E1E1E),
+                    onSurface: Colors.white,
+                  )  
+                : const ColorScheme.light(
+                    primary: Color(0xFF00C853),
+                    onPrimary: Colors.white,
+                    onSurface: Colors.black,
+                  ),
           ),
           child: child!,
         );
@@ -158,7 +168,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text("Cancel", style: TextStyle(color: Colors.black)),
+            child: const Text("Cancel", style: TextStyle(color: Colors.grey)),
           ),
           TextButton(
             onPressed: () {
@@ -188,8 +198,54 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
     );
   }
 
+  void _confirmDeleteCategory(String name) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text("Delete Category",
+            style: TextStyle(fontWeight: FontWeight.bold)),
+        content: Text(
+          "Are you sure you want to delete \"$name\"?",
+          style: const TextStyle(color: Colors.grey),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text("Cancel", style: TextStyle(color: Colors.grey)),
+          ),
+          TextButton(
+            onPressed: () {
+              setState(() {
+                if (transactionType == "Expense") {
+                  expenseCategories.removeWhere((c) => c['name'] == name);
+                } else {
+                  incomeCategories.removeWhere((c) => c['name'] == name);
+                }
+                if (selectedCategory == name) selectedCategory = "";
+              });
+              _saveCustomCategories();
+              Navigator.pop(ctx);
+            },
+            child: const Text("Delete",
+                style: TextStyle(
+                    color: Colors.red, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
   List<Map<String, dynamic>> get currentCategories =>
       transactionType == "Expense" ? expenseCategories : incomeCategories;
+
+  bool _isCustomCategory(String name) {
+    if (transactionType == "Expense") {
+      return !builtInExpense.contains(name);
+    } else {
+      return !builtInIncome.contains(name);
+    }
+  }
 
   @override
   void dispose() {
@@ -200,13 +256,18 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Provider.of<ThemeProvider>(context).isDark;
+    final bgColor = isDark ? const Color(0xFF121212) : Colors.white;
+    final fieldColor = isDark ? const Color(0xFF1E1E1E) : Colors.grey[100]!;
+    final textColor = isDark ? Colors.white : Colors.black;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: bgColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: bgColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: Icon(Icons.arrow_back, color: textColor),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -216,11 +277,11 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Column(
               children: [
-                _buildTypeToggle(),
+                _buildTypeToggle(isDark),
                 const SizedBox(height: 10),
                 _buildHeaderCard(),
                 const SizedBox(height: 20),
-                // Date picker row
+                // Date picker
                 GestureDetector(
                   onTap: _pickDate,
                   child: Container(
@@ -228,7 +289,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 16, vertical: 14),
                     decoration: BoxDecoration(
-                      color: Colors.grey[100],
+                      color: fieldColor,
                       borderRadius: BorderRadius.circular(14),
                     ),
                     child: Row(
@@ -238,8 +299,10 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                         const SizedBox(width: 12),
                         Text(
                           "${selectedDate.day}/${selectedDate.month}/${selectedDate.year}",
-                          style: const TextStyle(
-                              fontSize: 15, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: textColor),
                         ),
                         const Spacer(),
                         const Text("Change",
@@ -255,16 +318,18 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                 // Notes field
                 Container(
                   decoration: BoxDecoration(
-                    color: Colors.grey[100],
+                    color: fieldColor,
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: TextField(
                     controller: _notesController,
                     maxLines: 2,
                     textCapitalization: TextCapitalization.sentences,
+                    style: TextStyle(color: textColor),
                     decoration: const InputDecoration(
                       hintText: "Add a note (optional)...",
-                      hintStyle: TextStyle(color: Colors.grey, fontSize: 14),
+                      hintStyle:
+                          TextStyle(color: Colors.grey, fontSize: 14),
                       prefixIcon: Icon(Icons.notes,
                           color: Color(0xFF00C853), size: 20),
                       border: InputBorder.none,
@@ -277,9 +342,11 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text("Choose category",
+                    Text("Choose category",
                         style: TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold)),
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: textColor)),
                     GestureDetector(
                       onTap: _showAddCategoryDialog,
                       child: Container(
@@ -307,7 +374,9 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                 ),
                 const SizedBox(height: 16),
                 ...currentCategories.map((cat) => _buildCategoryItem(
-                    cat['icon'] as IconData, cat['name'] as String)),
+                    cat['icon'] as IconData,
+                    cat['name'] as String,
+                    isDark)),
                 const SizedBox(height: 50),
                 _buildSaveButton(),
                 const SizedBox(height: 30),
@@ -319,7 +388,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
     );
   }
 
-  Widget _buildTypeToggle() {
+  Widget _buildTypeToggle(bool isDark) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -337,7 +406,9 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
             decoration: BoxDecoration(
               color: transactionType == "Expense"
                   ? Colors.red[100]
-                  : Colors.grey[200],
+                  : isDark
+                      ? const Color(0xFF2A2A2A)
+                      : Colors.grey[200],
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
@@ -345,7 +416,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
               style: TextStyle(
                 color: transactionType == "Expense"
                     ? Colors.red[900]
-                    : Colors.grey[600],
+                    : Colors.grey[500],
                 fontWeight: FontWeight.bold,
                 fontSize: 15,
               ),
@@ -367,7 +438,9 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
             decoration: BoxDecoration(
               color: transactionType == "Income"
                   ? Colors.green[100]
-                  : Colors.grey[200],
+                  : isDark
+                      ? const Color(0xFF2A2A2A)
+                      : Colors.grey[200],
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
@@ -375,7 +448,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
               style: TextStyle(
                 color: transactionType == "Income"
                     ? Colors.green[900]
-                    : Colors.grey[600],
+                    : Colors.grey[500],
                 fontWeight: FontWeight.bold,
                 fontSize: 15,
               ),
@@ -460,8 +533,8 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
         },
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFF00C853),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(30)),
         ),
         child: const Text("Save",
             style: TextStyle(color: Colors.white, fontSize: 18)),
@@ -469,36 +542,65 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
     );
   }
 
-  Widget _buildCategoryItem(IconData icon, String label) {
+  Widget _buildCategoryItem(IconData icon, String label, bool isDark) {
     bool isSelected = selectedCategory == label;
-    return GestureDetector(
-      onTap: () => setState(() => selectedCategory = label),
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 8),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFE8F5E9) : Colors.transparent,
-          borderRadius: BorderRadius.circular(15),
-          border:
-              isSelected ? Border.all(color: const Color(0xFF00C853)) : null,
-        ),
-        child: Row(
-          children: [
-            CircleAvatar(
-              backgroundColor:
-                  isSelected ? const Color(0xFF00C853) : Colors.grey[200],
-              child:
-                  Icon(icon, color: isSelected ? Colors.white : Colors.black),
+    bool isCustom = _isCustomCategory(label);
+
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: isSelected
+            ? const Color(0xFFE8F5E9)
+            : Colors.transparent,
+        borderRadius: BorderRadius.circular(15),
+        border: isSelected ? Border.all(color: const Color(0xFF00C853)) : null,
+      ),
+      child: Row(
+        children: [
+          GestureDetector(
+            onTap: () => setState(() => selectedCategory = label),
+            child: CircleAvatar(
+              backgroundColor: isSelected
+                  ? const Color(0xFF00C853)
+                  : isDark
+                      ? const Color(0xFF2A2A2A)
+                      : Colors.grey[200],
+              child: Icon(icon,
+                  color: isSelected
+                      ? Colors.white
+                      : isDark
+                          ? Colors.white70
+                          : Colors.black),
             ),
-            const SizedBox(width: 20),
-            Text(label,
-                style: const TextStyle(
-                    fontSize: 16, fontWeight: FontWeight.bold)),
-            const Spacer(),
-            if (isSelected)
-              const Icon(Icons.check_circle, color: Color(0xFF00C853))
-          ],
-        ),
+          ),
+          const SizedBox(width: 20),
+          Expanded(
+            child: GestureDetector(
+              onTap: () => setState(() => selectedCategory = label),
+              child: Text(label,
+                  style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? Colors.white : Colors.black)),
+            ),
+          ),
+          if (isSelected && !isCustom)
+            const Icon(Icons.check_circle, color: Color(0xFF00C853)),
+          if (isCustom)
+            Row(
+              children: [
+                if (isSelected)
+                  const Icon(Icons.check_circle, color: Color(0xFF00C853)),
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: () => _confirmDeleteCategory(label),
+                  child: const Icon(Icons.delete_outline,
+                      color: Colors.red, size: 20),
+                ),
+              ],
+            ),
+        ],
       ),
     );
   }

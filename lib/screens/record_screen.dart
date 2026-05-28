@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:provider/provider.dart';
+import '../main.dart';
 
 class RecordsScreen extends StatefulWidget {
   final List<Map<String, dynamic>> transactions;
@@ -30,10 +32,13 @@ class _RecordsScreenState extends State<RecordsScreen> {
       bool matchesPeriod;
       if (selectedPeriod == "Week") {
         final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
-        final start = DateTime(startOfWeek.year, startOfWeek.month, startOfWeek.day);
-        matchesPeriod = date.isAfter(start) || date.isAtSameMomentAs(start);
+        final start = DateTime(
+            startOfWeek.year, startOfWeek.month, startOfWeek.day);
+        matchesPeriod =
+            date.isAfter(start) || date.isAtSameMomentAs(start);
       } else if (selectedPeriod == "Month") {
-        matchesPeriod = date.year == now.year && date.month == now.month;
+        matchesPeriod =
+            date.year == now.year && date.month == now.month;
       } else {
         matchesPeriod = date.year == now.year;
       }
@@ -61,11 +66,13 @@ class _RecordsScreenState extends State<RecordsScreen> {
     widget.onDelete(id);
   }
 
-  void _confirmDelete(BuildContext context, String id, String category) {
+  void _confirmDelete(
+      BuildContext context, String id, String category) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20)),
         title: const Text("Delete Transaction",
             style: TextStyle(fontWeight: FontWeight.bold)),
         content: Text(
@@ -76,7 +83,7 @@ class _RecordsScreenState extends State<RecordsScreen> {
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: const Text("Cancel",
-                style: TextStyle(color: Colors.black)),
+                style: TextStyle(color: Colors.grey)),
           ),
           TextButton(
             onPressed: () {
@@ -84,14 +91,16 @@ class _RecordsScreenState extends State<RecordsScreen> {
               _deleteTransaction(id);
             },
             child: const Text("Delete",
-                style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+                style: TextStyle(
+                    color: Colors.red, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
     );
   }
 
-  void _openEditScreen(BuildContext context, Map<String, dynamic> transaction) {
+  void _openEditScreen(
+      BuildContext context, Map<String, dynamic> transaction) {
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -113,7 +122,12 @@ class _RecordsScreenState extends State<RecordsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Provider.of<ThemeProvider>(context).isDark;
     final filtered = filteredTransactions;
+    final bgColor = isDark ? const Color(0xFF121212) : Colors.white;
+    final textColor = isDark ? Colors.white : Colors.black;
+    final fieldColor =
+        isDark ? const Color(0xFF1E1E1E) : Colors.grey[100]!;
 
     double totalIncome = filtered
         .where((t) => t['type'] == 'Income')
@@ -124,50 +138,59 @@ class _RecordsScreenState extends State<RecordsScreen> {
         .fold(0.0, (sum, t) => sum + (t['amount'] as double));
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: bgColor,
       appBar: AppBar(
-        title: const Text("Records",
-            style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+        title: Text("Records",
+            style: TextStyle(
+                color: textColor, fontWeight: FontWeight.bold)),
         centerTitle: true,
-        backgroundColor: Colors.white,
+        backgroundColor: bgColor,
         elevation: 0,
       ),
       body: Column(
         children: [
           // Search bar
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
             child: Container(
               height: 46,
               decoration: BoxDecoration(
-                color: Colors.grey[100],
+                color: fieldColor,
                 borderRadius: BorderRadius.circular(14),
               ),
               child: TextField(
                 controller: _searchController,
-                onChanged: (val) => setState(() => _searchQuery = val),
+                onChanged: (val) =>
+                    setState(() => _searchQuery = val),
+                style: TextStyle(color: textColor),
                 decoration: InputDecoration(
                   hintText: "Search by category...",
-                  hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
-                  prefixIcon: const Icon(Icons.search, color: Colors.grey, size: 20),
+                  hintStyle: const TextStyle(
+                      color: Colors.grey, fontSize: 14),
+                  prefixIcon: const Icon(Icons.search,
+                      color: Colors.grey, size: 20),
                   suffixIcon: _searchQuery.isNotEmpty
                       ? GestureDetector(
                           onTap: () {
                             _searchController.clear();
                             setState(() => _searchQuery = "");
                           },
-                          child: const Icon(Icons.close, color: Colors.grey, size: 18),
+                          child: const Icon(Icons.close,
+                              color: Colors.grey, size: 18),
                         )
                       : null,
                   border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 13),
+                  contentPadding:
+                      const EdgeInsets.symmetric(vertical: 13),
                 ),
               ),
             ),
           ),
           // Period tabs
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
             child: Container(
               decoration: BoxDecoration(
                 color: const Color(0xFF1E1E1E),
@@ -185,22 +208,28 @@ class _RecordsScreenState extends State<RecordsScreen> {
           // Income / Expense totals
           if (filtered.isNotEmpty)
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 20, vertical: 6),
               child: Row(
                 children: [
                   Expanded(
                     child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      padding:
+                          const EdgeInsets.symmetric(vertical: 12),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFE8F5E9),
+                        color: isDark
+                            ? const Color(0xFF1A2A1A)
+                            : const Color(0xFFE8F5E9),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Column(
                         children: [
                           const Text("Income",
-                              style: TextStyle(color: Colors.grey, fontSize: 12)),
+                              style: TextStyle(
+                                  color: Colors.grey, fontSize: 12)),
                           const SizedBox(height: 4),
-                          Text("+${totalIncome.toStringAsFixed(2)} ETB",
+                          Text(
+                              "+${totalIncome.toStringAsFixed(2)} ETB",
                               style: const TextStyle(
                                   color: Color(0xFF00C853),
                                   fontWeight: FontWeight.bold)),
@@ -211,17 +240,22 @@ class _RecordsScreenState extends State<RecordsScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      padding:
+                          const EdgeInsets.symmetric(vertical: 12),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFFEBEE),
+                        color: isDark
+                            ? const Color(0xFF2A1A1A)
+                            : const Color(0xFFFFEBEE),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Column(
                         children: [
                           const Text("Expense",
-                              style: TextStyle(color: Colors.grey, fontSize: 12)),
+                              style: TextStyle(
+                                  color: Colors.grey, fontSize: 12)),
                           const SizedBox(height: 4),
-                          Text("-${totalExpense.toStringAsFixed(2)} ETB",
+                          Text(
+                              "-${totalExpense.toStringAsFixed(2)} ETB",
                               style: const TextStyle(
                                   color: Color(0xFFEF5350),
                                   fontWeight: FontWeight.bold)),
@@ -235,14 +269,16 @@ class _RecordsScreenState extends State<RecordsScreen> {
           const SizedBox(height: 6),
           Expanded(
             child: filtered.isEmpty
-                ? _buildEmptyState()
+                ? _buildEmptyState(textColor)
                 : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 20),
                     itemCount: filtered.length,
                     itemBuilder: (context, index) {
                       final item = filtered[index];
                       bool isExpense = item['type'] == 'Expense';
-                      return _buildTransactionTile(context, item, isExpense);
+                      return _buildTransactionTile(
+                          context, item, isExpense, isDark);
                     },
                   ),
           ),
@@ -276,7 +312,7 @@ class _RecordsScreenState extends State<RecordsScreen> {
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(Color textColor) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -285,14 +321,17 @@ class _RecordsScreenState extends State<RecordsScreen> {
               ? Icons.search_off
               : Icons.description_outlined,
           size: 100,
-          color: Colors.grey[300],
+          color: Colors.grey[600],
         ),
         const SizedBox(height: 20),
         Text(
           _searchQuery.isNotEmpty
               ? "No results for \"$_searchQuery\""
               : "No records yet",
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: textColor),
         ),
         Text(
           _searchQuery.isNotEmpty
@@ -304,10 +343,13 @@ class _RecordsScreenState extends State<RecordsScreen> {
     );
   }
 
-  Widget _buildTransactionTile(
-      BuildContext context, Map<String, dynamic> item, bool isExpense) {
+  Widget _buildTransactionTile(BuildContext context,
+      Map<String, dynamic> item, bool isExpense, bool isDark) {
     final date = item['date'] as DateTime;
-    final formattedDate = "${date.day}/${date.month}/${date.year}";
+    final formattedDate =
+        "${date.day}/${date.month}/${date.year}";
+    final tileColor =
+        isDark ? const Color(0xFF1E1E1E) : Colors.grey[50]!;
 
     return Dismissible(
       key: Key(item['id']),
@@ -317,10 +359,10 @@ class _RecordsScreenState extends State<RecordsScreen> {
         padding: const EdgeInsets.only(right: 20),
         margin: const EdgeInsets.symmetric(vertical: 4),
         decoration: BoxDecoration(
-          color: Colors.red[100],
+          color: Colors.red[900],
           borderRadius: BorderRadius.circular(12),
         ),
-        child: const Icon(Icons.delete_outline, color: Colors.red),
+        child: const Icon(Icons.delete_outline, color: Colors.white),
       ),
       confirmDismiss: (_) async {
         bool confirm = false;
@@ -342,7 +384,7 @@ class _RecordsScreenState extends State<RecordsScreen> {
                   Navigator.pop(ctx);
                 },
                 child: const Text("Cancel",
-                    style: TextStyle(color: Colors.black)),
+                    style: TextStyle(color: Colors.grey)),
               ),
               TextButton(
                 onPressed: () {
@@ -351,7 +393,8 @@ class _RecordsScreenState extends State<RecordsScreen> {
                 },
                 child: const Text("Delete",
                     style: TextStyle(
-                        color: Colors.red, fontWeight: FontWeight.bold)),
+                        color: Colors.red,
+                        fontWeight: FontWeight.bold)),
               ),
             ],
           ),
@@ -362,14 +405,15 @@ class _RecordsScreenState extends State<RecordsScreen> {
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 4),
         decoration: BoxDecoration(
-          color: Colors.grey[50],
+          color: tileColor,
           borderRadius: BorderRadius.circular(12),
         ),
         child: ListTile(
           onTap: () => _openEditScreen(context, item),
           leading: CircleAvatar(
-            backgroundColor:
-                isExpense ? const Color(0xFFFFEBEE) : const Color(0xFFE8F5E9),
+            backgroundColor: isExpense
+                ? const Color(0xFFFFEBEE)
+                : const Color(0xFFE8F5E9),
             child: Icon(
               isExpense
                   ? Icons.keyboard_double_arrow_down
@@ -382,7 +426,8 @@ class _RecordsScreenState extends State<RecordsScreen> {
           title: Text(item['category'],
               style: const TextStyle(fontWeight: FontWeight.bold)),
           subtitle: Text(formattedDate,
-              style: const TextStyle(color: Colors.grey, fontSize: 12)),
+              style:
+                  const TextStyle(color: Colors.grey, fontSize: 12)),
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -396,8 +441,8 @@ class _RecordsScreenState extends State<RecordsScreen> {
               ),
               const SizedBox(width: 8),
               GestureDetector(
-                onTap: () =>
-                    _confirmDelete(context, item['id'], item['category']),
+                onTap: () => _confirmDelete(
+                    context, item['id'], item['category']),
                 child: const Icon(Icons.delete_outline,
                     color: Colors.grey, size: 20),
               ),
@@ -422,10 +467,12 @@ class EditTransactionScreen extends StatefulWidget {
   });
 
   @override
-  State<EditTransactionScreen> createState() => _EditTransactionScreenState();
+  State<EditTransactionScreen> createState() =>
+      _EditTransactionScreenState();
 }
 
-class _EditTransactionScreenState extends State<EditTransactionScreen> {
+class _EditTransactionScreenState
+    extends State<EditTransactionScreen> {
   late String transactionType;
   late String selectedCategory;
   late TextEditingController _amountController;
@@ -467,12 +514,13 @@ class _EditTransactionScreenState extends State<EditTransactionScreen> {
         final List incCats = data['income'] ?? [];
         setState(() {
           for (final cat in expCats) {
-            if (!expenseCategories.contains(cat)) expenseCategories.add(cat);
+            if (!expenseCategories.contains(cat))
+              expenseCategories.add(cat);
           }
           for (final cat in incCats) {
-            if (!incomeCategories.contains(cat)) incomeCategories.add(cat);
+            if (!incomeCategories.contains(cat))
+              incomeCategories.add(cat);
           }
-          // make sure current category is in the list
           if (transactionType == 'Expense' &&
               !expenseCategories.contains(selectedCategory)) {
             expenseCategories.add(selectedCategory);
@@ -493,10 +541,13 @@ class _EditTransactionScreenState extends State<EditTransactionScreen> {
   }
 
   List<String> get currentCategories =>
-      transactionType == 'Expense' ? expenseCategories : incomeCategories;
+      transactionType == 'Expense'
+          ? expenseCategories
+          : incomeCategories;
 
   Future<void> _saveEdit() async {
-    final double? amount = double.tryParse(_amountController.text);
+    final double? amount =
+        double.tryParse(_amountController.text);
     if (amount == null || amount <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Enter a valid amount")));
@@ -538,16 +589,21 @@ class _EditTransactionScreenState extends State<EditTransactionScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Provider.of<ThemeProvider>(context).isDark;
+    final bgColor = isDark ? const Color(0xFF121212) : Colors.white;
+    final textColor = isDark ? Colors.white : Colors.black;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: bgColor,
       appBar: AppBar(
-        title: const Text("Edit Transaction",
-            style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+        title: Text("Edit Transaction",
+            style: TextStyle(
+                color: textColor, fontWeight: FontWeight.bold)),
         centerTitle: true,
-        backgroundColor: Colors.white,
+        backgroundColor: bgColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: Icon(Icons.arrow_back, color: textColor),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -572,7 +628,9 @@ class _EditTransactionScreenState extends State<EditTransactionScreen> {
                     decoration: BoxDecoration(
                       color: transactionType == "Expense"
                           ? Colors.red[100]
-                          : Colors.grey[200],
+                          : isDark
+                              ? const Color(0xFF2A2A2A)
+                              : Colors.grey[200],
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
@@ -580,7 +638,7 @@ class _EditTransactionScreenState extends State<EditTransactionScreen> {
                       style: TextStyle(
                         color: transactionType == "Expense"
                             ? Colors.red[900]
-                            : Colors.grey[600],
+                            : Colors.grey[500],
                         fontWeight: FontWeight.bold,
                         fontSize: 15,
                       ),
@@ -601,7 +659,9 @@ class _EditTransactionScreenState extends State<EditTransactionScreen> {
                     decoration: BoxDecoration(
                       color: transactionType == "Income"
                           ? Colors.green[100]
-                          : Colors.grey[200],
+                          : isDark
+                              ? const Color(0xFF2A2A2A)
+                              : Colors.grey[200],
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
@@ -609,7 +669,7 @@ class _EditTransactionScreenState extends State<EditTransactionScreen> {
                       style: TextStyle(
                         color: transactionType == "Income"
                             ? Colors.green[900]
-                            : Colors.grey[600],
+                            : Colors.grey[500],
                         fontWeight: FontWeight.bold,
                         fontSize: 15,
                       ),
@@ -628,7 +688,8 @@ class _EditTransactionScreenState extends State<EditTransactionScreen> {
               child: Column(
                 children: [
                   Text("Edit $transactionType",
-                      style: const TextStyle(color: Colors.white70)),
+                      style:
+                          const TextStyle(color: Colors.white70)),
                   const SizedBox(height: 10),
                   TextField(
                     controller: _amountController,
@@ -640,10 +701,11 @@ class _EditTransactionScreenState extends State<EditTransactionScreen> {
                         fontWeight: FontWeight.bold),
                     decoration: const InputDecoration(
                       hintText: "0.00",
-                      hintStyle: TextStyle(color: Colors.white38),
+                      hintStyle:
+                          TextStyle(color: Colors.white38),
                       suffixText: " ETB",
-                      suffixStyle:
-                          TextStyle(color: Colors.white70, fontSize: 16),
+                      suffixStyle: TextStyle(
+                          color: Colors.white70, fontSize: 16),
                       border: InputBorder.none,
                     ),
                   ),
@@ -651,15 +713,20 @@ class _EditTransactionScreenState extends State<EditTransactionScreen> {
               ),
             ),
             const SizedBox(height: 30),
-            const Text("Choose category",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text("Choose category",
+                style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: textColor)),
             const SizedBox(height: 16),
             ...currentCategories.map((cat) {
               bool isSelected = selectedCategory == cat;
               return GestureDetector(
-                onTap: () => setState(() => selectedCategory = cat),
+                onTap: () =>
+                    setState(() => selectedCategory = cat),
                 child: Container(
-                  margin: const EdgeInsets.symmetric(vertical: 8),
+                  margin:
+                      const EdgeInsets.symmetric(vertical: 8),
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: isSelected
@@ -667,7 +734,8 @@ class _EditTransactionScreenState extends State<EditTransactionScreen> {
                         : Colors.transparent,
                     borderRadius: BorderRadius.circular(15),
                     border: isSelected
-                        ? Border.all(color: const Color(0xFF00C853))
+                        ? Border.all(
+                            color: const Color(0xFF00C853))
                         : null,
                   ),
                   child: Row(
@@ -675,16 +743,24 @@ class _EditTransactionScreenState extends State<EditTransactionScreen> {
                       CircleAvatar(
                         backgroundColor: isSelected
                             ? const Color(0xFF00C853)
-                            : Colors.grey[200],
+                            : isDark
+                                ? const Color(0xFF2A2A2A)
+                                : Colors.grey[200],
                         child: Icon(
                           _categoryIcon(cat),
-                          color: isSelected ? Colors.white : Colors.black,
+                          color: isSelected
+                              ? Colors.white
+                              : isDark
+                                  ? Colors.white70
+                                  : Colors.black,
                         ),
                       ),
                       const SizedBox(width: 20),
                       Text(cat,
-                          style: const TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.bold)),
+                          style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: textColor)),
                       const Spacer(),
                       if (isSelected)
                         const Icon(Icons.check_circle,
@@ -706,10 +782,11 @@ class _EditTransactionScreenState extends State<EditTransactionScreen> {
                       borderRadius: BorderRadius.circular(30)),
                 ),
                 child: _isSaving
-                    ? const CircularProgressIndicator(color: Colors.white)
+                    ? const CircularProgressIndicator(
+                        color: Colors.white)
                     : const Text("Save Changes",
-                        style:
-                            TextStyle(color: Colors.white, fontSize: 18)),
+                        style: TextStyle(
+                            color: Colors.white, fontSize: 18)),
               ),
             ),
             const SizedBox(height: 30),
@@ -721,36 +798,21 @@ class _EditTransactionScreenState extends State<EditTransactionScreen> {
 
   IconData _categoryIcon(String category) {
     switch (category) {
-      case "Food":
-        return Icons.restaurant;
-      case "Transport":
-        return Icons.directions_bus;
-      case "House Rent":
-        return Icons.home;
-      case "Shopping":
-        return Icons.shopping_basket;
-      case "Medical":
-        return Icons.local_hospital;
-      case "Education":
-        return Icons.school;
-      case "Entertainment":
-        return Icons.movie;
-      case "Utilities":
-        return Icons.bolt;
-      case "Salary":
-        return Icons.work;
-      case "Gift":
-        return Icons.card_giftcard;
-      case "Interest":
-        return Icons.savings;
-      case "Freelance":
-        return Icons.laptop;
-      case "Investment":
-        return Icons.trending_up;
-      case "Rental":
-        return Icons.house;
-      default:
-        return Icons.label;
+      case "Food": return Icons.restaurant;
+      case "Transport": return Icons.directions_bus;
+      case "House Rent": return Icons.home;
+      case "Shopping": return Icons.shopping_basket;
+      case "Medical": return Icons.local_hospital;
+      case "Education": return Icons.school;
+      case "Entertainment": return Icons.movie;
+      case "Utilities": return Icons.bolt;
+      case "Salary": return Icons.work;
+      case "Gift": return Icons.card_giftcard;
+      case "Interest": return Icons.savings;
+      case "Freelance": return Icons.laptop;
+      case "Investment": return Icons.trending_up;
+      case "Rental": return Icons.house;
+      default: return Icons.label;
     }
   }
 }

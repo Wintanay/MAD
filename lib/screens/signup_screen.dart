@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'login_screen.dart';
 
 class SignUpScreen extends StatefulWidget {
@@ -18,6 +19,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
   bool _isLoading = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+  String _passwordStrength = '';
+  Color _strengthColor = Colors.transparent;
 
   @override
   void dispose() {
@@ -26,6 +29,59 @@ class _SignUpScreenState extends State<SignUpScreen> {
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
+  }
+
+  void _checkPasswordStrength(String password) {
+    if (password.isEmpty) {
+      setState(() {
+        _passwordStrength = '';
+        _strengthColor = Colors.transparent;
+      });
+      return;
+    }
+
+    bool hasUppercase = password.contains(RegExp(r'[A-Z]'));
+    bool hasLowercase = password.contains(RegExp(r'[a-z]'));
+    bool hasDigits = password.contains(RegExp(r'[0-9]'));
+    bool hasSpecial =
+        password.contains(RegExp(r'[!@#\$%^&*(),.?":{}|<>]'));
+    bool hasMinLength = password.length >= 8;
+
+    int strength = 0;
+    if (hasUppercase) strength++;
+    if (hasLowercase) strength++;
+    if (hasDigits) strength++;
+    if (hasSpecial) strength++;
+    if (hasMinLength) strength++;
+
+    setState(() {
+      if (strength <= 2) {
+        _passwordStrength = 'Weak';
+        _strengthColor = Colors.red;
+      } else if (strength <= 3) {
+        _passwordStrength = 'Medium';
+        _strengthColor = Colors.orange;
+      } else {
+        _passwordStrength = 'Strong';
+        _strengthColor = const Color(0xFF00C853);
+      }
+    });
+  }
+
+  String? _validatePassword(String password) {
+    if (password.length < 8) {
+      return 'Password must be at least 8 characters';
+    }
+    if (!password.contains(RegExp(r'[A-Z]'))) {
+      return 'Password must contain at least one uppercase letter';
+    }
+    if (!password.contains(RegExp(r'[0-9]'))) {
+      return 'Password must contain at least one number';
+    }
+    if (!password.contains(RegExp(r'[!@#\$%^&*(),.?":{}|<>]'))) {
+      return 'Password must contain at least one special character';
+    }
+    return null;
   }
 
   Future<void> _signUp() async {
@@ -39,17 +95,17 @@ class _SignUpScreenState extends State<SignUpScreen> {
       return;
     }
 
-    if (_passwordController.text != _confirmPasswordController.text) {
+    final passwordError = _validatePassword(_passwordController.text);
+    if (passwordError != null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Passwords do not match')),
+        SnackBar(content: Text(passwordError)),
       );
       return;
     }
 
-    if (_passwordController.text.length < 6) {
+    if (_passwordController.text != _confirmPasswordController.text) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Password must be at least 6 characters')),
+        const SnackBar(content: Text('Passwords do not match')),
       );
       return;
     }
@@ -66,6 +122,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
       await userCredential.user
           ?.updateDisplayName(_nameController.text.trim());
       await userCredential.user?.reload();
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('onboarding_done', true);
 
       if (!mounted) return;
 
@@ -113,7 +172,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
               const SizedBox(height: 30),
               const Text(
                 'Create Account',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                style:
+                    TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
               const Text(
                 'Join the Personal Expense Tracker',
@@ -133,13 +193,73 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 keyboardType: TextInputType.emailAddress,
               ),
               const SizedBox(height: 20),
-              _buildPasswordField(
-                label: 'Password',
-                hint: 'Create a password',
-                controller: _passwordController,
-                obscure: _obscurePassword,
-                onToggle: () =>
-                    setState(() => _obscurePassword = !_obscurePassword),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Password',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _passwordController,
+                    obscureText: _obscurePassword,
+                    onChanged: _checkPasswordStrength,
+                    decoration: InputDecoration(
+                      hintText: 'Create a password',
+                      filled: true,
+                      fillColor: Colors.grey[200],
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide.none,
+                      ),
+                      suffixIcon: IconButton(
+                        onPressed: () => setState(
+                            () => _obscurePassword = !_obscurePassword),
+                        icon: Icon(
+                          _obscurePassword
+                              ? Icons.visibility_outlined
+                              : Icons.visibility_off_outlined,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ),
+                  ),
+                  if (_passwordStrength.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(4),
+                            child: LinearProgressIndicator(
+                              value: _passwordStrength == 'Weak'
+                                  ? 0.33
+                                  : _passwordStrength == 'Medium'
+                                      ? 0.66
+                                      : 1.0,
+                              minHeight: 6,
+                              backgroundColor: Colors.grey[200],
+                              color: _strengthColor,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          _passwordStrength,
+                          style: TextStyle(
+                            color: _strengthColor,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    const Text(
+                      '8+ chars • Uppercase • Number • Special character',
+                      style: TextStyle(color: Colors.grey, fontSize: 11),
+                    ),
+                  ],
+                ],
               ),
               const SizedBox(height: 20),
               _buildPasswordField(
@@ -147,8 +267,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 hint: 'Re-enter your password',
                 controller: _confirmPasswordController,
                 obscure: _obscureConfirmPassword,
-                onToggle: () => setState(
-                    () => _obscureConfirmPassword = !_obscureConfirmPassword),
+                onToggle: () => setState(() =>
+                    _obscureConfirmPassword = !_obscureConfirmPassword),
               ),
               const SizedBox(height: 30),
               SizedBox(
@@ -163,11 +283,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     ),
                   ),
                   child: _isLoading
-                      ? const CircularProgressIndicator(color: Colors.white)
+                      ? const CircularProgressIndicator(
+                          color: Colors.white)
                       : const Text(
                           'Sign Up',
-                          style:
-                              TextStyle(color: Colors.white, fontSize: 16),
+                          style: TextStyle(
+                              color: Colors.white, fontSize: 16),
                         ),
                 ),
               ),

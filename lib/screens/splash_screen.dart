@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../main.dart';
 import 'login_screen.dart';
+import 'onboarding_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -19,24 +23,48 @@ class _SplashScreenState extends State<SplashScreen> {
 
   Future<void> _navigate() async {
     await Future.delayed(const Duration(seconds: 3));
-
     if (!mounted) return;
 
-    // Listen once for the auth state — waits for Firebase to fully initialize
-    FirebaseAuth.instance.authStateChanges().first.then((user) {
+    final prefs = await SharedPreferences.getInstance();
+    final bool onboardingDone = prefs.getBool('onboarding_done') ?? false;
+
+    if (!onboardingDone) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const OnboardingScreen()),
+      );
+      return;
+    }
+
+    final user = await FirebaseAuth.instance.authStateChanges().first;
+
+    if (user != null && mounted) {
+      try {
+        final doc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .collection('settings')
+            .doc('theme')
+            .get();
+
+        if (doc.exists && mounted) {
+          final isDark = doc.data()?['darkMode'] ?? false;
+          Provider.of<ThemeProvider>(context, listen: false).setDark(isDark);
+        }
+      } catch (_) {}
+
       if (!mounted) return;
-      if (user != null) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const MainNavigation()),
-        );
-      } else {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const LoginScreen()),
-        );
-      }
-    });
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const MainNavigation()),
+      );
+    } else {
+      if (!mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
+      );
+    }
   }
 
   @override
